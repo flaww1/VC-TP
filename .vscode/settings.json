@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.sql": "jinja-sql",
+        "*.yml": "yaml",
+        "dbt_project.yml": "yaml",
+        "*.csv": "csv",
+        "random": "cpp"
+    }
+}

@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/flavio/Downloads/TrabalhoVC/build/cmake_install.cmake",
+		"/home/flavio/Downloads/TrabalhoVC/build/lib/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
