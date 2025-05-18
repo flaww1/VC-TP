@@ -46,7 +46,7 @@ extern "C"
     /**
      * @brief Desenha círculos e centros de massa nas moedas detetadas com performance otimizada.
      */
-    int DrawBoundingBoxes(IVC *src, OVC *blaobs, int nBlobs, int coinType)
+    int DrawBoundingBoxes(IVC *src, OVC *blobs, int nBlobs, int coinType)
     {
         if (!src || !blobs || nBlobs <= 0 || src->data == NULL)
             return 0;
@@ -78,6 +78,16 @@ extern "C"
             // Get blob properties
             const float circularDiameter = CalculateCircularDiameter(&blobs[i]);
             const int radius = (int)(circularDiameter / 2.0f);
+            
+            // Skip coins that are partially off-screen
+            // Check if the coin is fully within the frame with a small margin (5 pixels)
+            const int margin = 5;
+            if (blobs[i].xc - radius < margin || 
+                blobs[i].xc + radius >= width - margin || 
+                blobs[i].yc - radius < margin || 
+                blobs[i].yc + radius >= height - margin) {
+                continue;  // Skip this coin as it's partially outside the frame
+            }
             
             // Determine coin type based on diameter for tracking and labeling
             int actualCoinType = 0;
