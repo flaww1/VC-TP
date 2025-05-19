@@ -122,9 +122,10 @@ extern "C"
                 }
             }
             
-            // Check if this coin has been detected before (for tracking only)
+            // Check if this coin has been detected before (for tracking only - don't count)
             if (actualCoinType > 0) {
-                IsCoinAlreadyDetected(blobs[i].xc, blobs[i].yc, actualCoinType);
+                // Pass 0 as last parameter to just track without counting
+                IsCoinAlreadyDetected(blobs[i].xc, blobs[i].yc, actualCoinType, 0);
             }
             
             // Always use the proper color based on coin type
@@ -514,10 +515,21 @@ extern "C"
                 coinCounts[i] = 0;
             }
             firstFrame = false;
+            printf("[INFO] Starting coin detection\n");
         }
         
         // Increment frame counter for coin tracking
         IncrementFrameCounter();
+        
+        // Show summary of current counts every 30 frames
+        if (GetFrameCounter() % 30 == 0) {
+            float total = coinCounts[0] * 0.01f + coinCounts[1] * 0.02f + 
+                         coinCounts[2] * 0.05f + coinCounts[3] * 0.10f + 
+                         coinCounts[4] * 0.20f + coinCounts[5] * 0.50f;
+            printf("[INFO] Frame %d - Current totals: 1c:%d 2c:%d 5c:%d 10c:%d 20c:%d 50c:%d = %.2f EUR\n", 
+                   GetFrameCounter(), coinCounts[0], coinCounts[1], coinCounts[2], 
+                   coinCounts[3], coinCounts[4], coinCounts[5], total);
+        }
         
         // Return early if invalid parameters
         if (!frame || !frame2 || !excludeList || !coinCounts) {

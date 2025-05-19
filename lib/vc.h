@@ -277,30 +277,6 @@ extern "C"
 	 */
 	void ProcessImage(IVC *src, OVC *blobs, OVC *blobs2, OVC *blobs3, int nlabels, int nlabels2, int nlabels3, int *excludeList, int *coinCounts);
 
-	/**
-	 * @brief Identifica o tipo de moeda com base no diâmetro e análise de cor
-	 * @param src Imagem original para análise
-	 * @param diameter Diâmetro da moeda em pixels
-	 * @param segmentType Tipo de segmentação utilizada (0 ou 1)
-	 * @param xc Coordenada X do centro da moeda
-	 * @param yc Coordenada Y do centro da moeda
-	 * @param coinCounts Array para contar ocorrências de cada tipo de moeda
-	 * @return Valor da moeda identificada
-	 */
-	int CoinType(IVC *src, int diameter, int segmentType, int xc, int yc, int *coinCounts);
-
-	/**
-	 * @brief Detecta se uma moeda é bimetálica (1€ ou 2€)
-	 * 
-	 * @param src Imagem original para análise
-	 * @param xc Coordenada X do centro da moeda
-	 * @param yc Coordenada Y do centro da moeda
-	 * @param radius Raio da moeda
-	 * @param silverBlobs Array de blobs de áreas prateadas
-	 * @param nSilverBlobs Número de blobs prateados
-	 * @return 1 para 1€, 2 para 2€, 0 caso não seja bimetálica
-	 */
-	int DetectBimetalCoin(IVC *src, int xc, int yc, int radius, OVC *silverBlobs, int nSilverBlobs);
 
 	/**
 	 * @brief Verifica se um blob tem uma forma consistente de moeda
@@ -355,51 +331,20 @@ extern "C"
 	void IncrementFrameCounter();
 
 	/**
-	 * @brief Verifica se uma moeda já foi detectada anteriormente
-	 * @param x Coordenada X da moeda
-	 * @param y Coordenada Y da moeda
-	 * @param coinType Tipo de moeda (1-8)
-	 * @return 1 se já detectada, 0 caso contrário
+	 * @brief Retorna o contador de frames atual (para debug/estatísticas)
 	 */
-	int IsCoinAlreadyDetected(int x, int y, int coinType);
+	int GetFrameCounter();
 
 	/**
-	 * @brief Detecta moedas douradas
-	 * @param blob Blob principal
-	 * @param goldBlobs Array de blobs dourados
-	 * @param ngoldBlobs Número de blobs dourados
-	 * @param excludeList Lista de exclusão
-	 * @param counters Contadores de moedas
-	 * @param distThresholdSq Limiar de distância ao quadrado
-	 * @return true se encontrou moeda dourada, false caso contrário
+	 * @brief Enhanced function to check if a coin was already detected and counted
+	 * @param x X coordinate of coin center
+	 * @param y Y coordinate of coin center
+	 * @param coinType Type of coin (1-8)
+	 * @param countIt Whether to mark this coin as counted (1) or just check (0)
+	 * @return 1 if already counted, 0 if new or not yet counted
 	 */
-	bool DetectGoldCoins(OVC *blob, OVC *goldBlobs, int ngoldBlobs, int *excludeList, int *counters, int distThresholdSq);
+	int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt);
 
-	/**
-	 * @brief Detecta moedas de bronze/cobre
-	 * @param blob Blob principal
-	 * @param copperBlobs Array de blobs de cobre
-	 * @param ncopperBlobs Número de blobs de cobre
-	 * @param excludeList Lista de exclusão
-	 * @param counters Contadores de moedas
-	 * @param distThresholdSq Limiar de distância ao quadrado
-	 * @return true se encontrou moeda de cobre, false caso contrário
-	 */
-	bool DetectBronzeCoins(OVC *blob, OVC *copperBlobs, int ncopperBlobs, int *excludeList, int *counters, int distThresholdSq);
-
-	/**
-	 * @brief Segmenta áreas prateadas na imagem
-	 * @param hsvSilver Imagem HSV onde segmentar
-	 */
-	void SegmentSilverAreas(IVC *hsvSilver);
-	
-	/**
-	 * @brief Filtra blobs de áreas prateadas
-	 * @param blobs Array de blobs a filtrar
-	 * @param nlabels Número de blobs
-	 */
-	void FilterSilverBlobs(OVC *blobs, int nlabels);
-	
 	/**
 	 * @brief Desenha visualizações de moedas
 	 * @param frame Frame onde desenhar
@@ -423,18 +368,6 @@ extern "C"
 	 * @return 1 em caso de sucesso
 	 */
 	int DrawBoundingBoxes(IVC *src, OVC *blobs, int nBlobs, int coinType);
-
-	/**
-	 * @brief Checks if an area has a different colored center than its outer part
-	 * 
-	 * @param frame Original color frame
-	 * @param centerX Center X coordinate
-	 * @param centerY Center Y coordinate
-	 * @param sampleRadius Radius to sample pixels
-	 * @param expectSilverCenter true if expecting silver center, false if expecting gold center
-	 * @return 1 if different colored center detected, 0 otherwise
-	 */
-	int CheckForDifferentColoredCenter(IVC *frame, int centerX, int centerY, float sampleRadius, bool expectSilverCenter);
 
 	/**
 	 * @brief Gets the most recent coin type detected at a specific location
@@ -485,46 +418,6 @@ extern "C"
 	bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
                            int *excludeList, int *counters, int distThresholdSq);
 
-	/**
-	 * @brief Draw improved visualization with annotations
-	 */
-	void DrawCoinsWithInfo(IVC *frame, OVC *coinBlobs, int nBlobs, int *coinCounts);
-
-	/**
-	 * @brief Draw a rectangle in the image
-	 */
-	void DrawRectangle(IVC *image, int x, int y, int width, int height, 
-                  unsigned char r, unsigned char g, unsigned char b);
-
-	/**
-	 * @brief Draw a circle in the image
-	 */
-	void DrawCircle(IVC *image, int x, int y, int radius,
-               unsigned char r, unsigned char g, unsigned char b);
-
-	/**
-	 * @brief Draw text on the image
-	 */
-	void DrawText(IVC *image, const char* text, int x, int y,
-             unsigned char r, unsigned char g, unsigned char b, int fontSize);
-
-	/**
-	 * @brief Draw a thick circle around a coin
-	 */
-	void DrawThickCircle(IVC *image, int centerX, int centerY, int radius,
-                    unsigned char r, unsigned char g, unsigned char b, int thickness);
-
-	/**
-	 * @brief Draw digits directly as pixels for coin values
-	 */
-	void DrawDigitPixels(IVC *image, int value, int centerX, int centerY, 
-                    unsigned char r, unsigned char g, unsigned char b);
-                    
-	/**
-	 * @brief Draw simple text for status display
-	 */
-	void DrawSimpleText(IVC *image, const char* text, int x, int y,
-                  unsigned char r, unsigned char g, unsigned char b);
 
 #ifdef __cplusplus
 }

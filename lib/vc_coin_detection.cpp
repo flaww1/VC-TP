@@ -235,7 +235,7 @@ bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs,
                 // If we have a previous classification and it's a copper coin, use it
                 if (coinType >= 1 && coinType <= 3) {
                     // Only count if not already counted
-                    if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, coinType)) {
+                    if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, coinType, 1)) {
                         counters[coinType - 1]++;
                         printf("COIN COUNTED: %d cent (COPPER contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
                             coinType == 1 ? 1 : (coinType == 2 ? 2 : 5), 
@@ -265,7 +265,7 @@ bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs,
                 }
                 
                 // Only count if not already counted
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, bestGuessType + 1)) {
+                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, bestGuessType + 1, 1)) {
                     counters[bestGuessType]++;
                     printf("COIN COUNTED: %d cent (COPPER contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
                         bestGuessType == 0 ? 1 : (bestGuessType == 1 ? 2 : 5), 
@@ -278,33 +278,42 @@ bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs,
             // Regular classification with adaptive tolerance
             if (diameter >= D_1CENT * (1.0f - tolerance) && diameter <= D_1CENT * (1.0f + tolerance)) {
                 // 1 cent (index 0)
-                // Only count if not already counted
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 1)) {
+                // Only count if not already counted - passing 1 to mark as counted
+                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 1, 1)) {
                     counters[0]++;
-                    printf("COIN COUNTED: 1 cent (COPPER contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
-                           diameter, copperBlobs[i].area, circularity);
+                    printf("[DEBUG] COIN COUNTED: 1 cent (COPPER) | Diam: %.1f | Area: %d | Circ: %.2f | Total now: %d\n",
+                           diameter, copperBlobs[i].area, circularity, counters[0]);
+                } else {
+                    printf("[DEBUG] Detected (already counted): 1 cent at (%d,%d)\n", 
+                           copperBlobs[i].xc, copperBlobs[i].yc);
                 }
                 ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
             }
             else if (diameter >= D_2CENT * (1.0f - tolerance) && diameter <= D_2CENT * (1.0f + tolerance)) {
                 // 2 cents (index 1)
-                // Only count if not already counted
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 2)) {
+                // Only count if not already counted - passing 1 to mark as counted
+                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 2, 1)) {
                     counters[1]++;
-                    printf("COIN COUNTED: 2 cents (COPPER contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
-                           diameter, copperBlobs[i].area, circularity);
+                    printf("[DEBUG] COIN COUNTED: 2 cents (COPPER) | Diam: %.1f | Area: %d | Circ: %.2f | Total now: %d\n",
+                           diameter, copperBlobs[i].area, circularity, counters[1]);
+                } else {
+                    printf("[DEBUG] Detected (already counted): 2 cents at (%d,%d)\n", 
+                           copperBlobs[i].xc, copperBlobs[i].yc);
                 }
                 ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
             }
             else if (diameter >= D_5CENT * (1.0f - tolerance) && diameter <= D_5CENT * (1.0f + tolerance)) {
                 // 5 cents (index 2)
-                // Only count if not already counted
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 3)) {
+                // Only count if not already counted - passing 1 to mark as counted
+                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 3, 1)) {
                     counters[2]++;
-                    printf("COIN COUNTED: 5 cents (COPPER contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
-                           diameter, copperBlobs[i].area, circularity);
+                    printf("[DEBUG] COIN COUNTED: 5 cents (COPPER) | Diam: %.1f | Area: %d | Circ: %.2f | Total now: %d\n",
+                           diameter, copperBlobs[i].area, circularity, counters[2]);
+                } else {
+                    printf("[DEBUG] Detected (already counted): 5 cents at (%d,%d)\n", 
+                           copperBlobs[i].xc, copperBlobs[i].yc);
                 }
                 ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
@@ -324,4 +333,138 @@ bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs,
         return false;
     
     // Frame dimensions for adaptive tolerance
-    const int frame
+    const int frameWidth = 640;   // Assumed frame width
+    const int frameHeight = 480;  // Assumed frame height
+    
+    // Edge proximity check parameter
+    const int EDGE_MARGIN = 90; // Half the diameter of the largest gold coin + margin
+    
+    for (int i = 0; i < ngoldBlobs; i++) {
+        // Verify blob validity
+        if (goldBlobs[i].label == 0 || goldBlobs[i].area < 7000)
+            continue;
+            
+        // Check if centers are close
+        int dx = goldBlobs[i].xc - blob->xc;
+        int dy = goldBlobs[i].yc - blob->yc;
+        int distSq = dx*dx + dy*dy;
+        
+        if (distSq <= distThresholdSq) {
+            // Found nearby gold blob
+            float diameter = CalculateCircularDiameter(&goldBlobs[i]);
+            float circularity = CalculateCircularity(&goldBlobs[i]);
+            
+            // Additional circularity check for gold coins (more strict)
+            if (circularity < 0.8f) {
+                continue; // Skip non-circular objects
+            }
+            
+            // Calculate adaptive tolerance based on position in frame
+            float tolerance = CalculateAdaptiveTolerance(goldBlobs[i].xc, goldBlobs[i].yc, 
+                                                        frameWidth, frameHeight);
+            
+            // Check if blob is near the edge of the frame
+            bool isNearEdge = false;
+            if (goldBlobs[i].xc < EDGE_MARGIN || goldBlobs[i].yc < EDGE_MARGIN || 
+                goldBlobs[i].xc > frameWidth - EDGE_MARGIN || goldBlobs[i].yc > frameHeight - EDGE_MARGIN) {
+                isNearEdge = true;
+                
+                // For edge coins, try to maintain previous frame's classification
+                int coinType = GetLastCoinTypeAtLocation(goldBlobs[i].xc, goldBlobs[i].yc);
+                
+                // If we have a previous classification and it's a gold coin, use it
+                if (coinType >= 4 && coinType <= 6) {
+                    // Only count if not already counted
+                    if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, coinType, 1)) {
+                        counters[coinType - 1]++;
+                        printf("COIN COUNTED: %d cents (GOLD contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
+                            coinType == 4 ? 10 : (coinType == 5 ? 20 : 50), 
+                            diameter, goldBlobs[i].area, circularity);
+                    }
+                    ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                    return true;
+                }
+                
+                // If no previous classification, make a best guess based on diameter ratio
+                float size10CentRatio = diameter / D_10CENT;
+                float size20CentRatio = diameter / D_20CENT;
+                float size50CentRatio = diameter / D_50CENT;
+                
+                int bestGuessType;
+                // Find closest match by comparing ratios to 1.0
+                float diff10Cent = fabsf(size10CentRatio - 1.0f);
+                float diff20Cent = fabsf(size20CentRatio - 1.0f);
+                float diff50Cent = fabsf(size50CentRatio - 1.0f);
+                
+                if (diff10Cent < diff20Cent && diff10Cent < diff50Cent) {
+                    bestGuessType = 3; // 10c
+                } else if (diff20Cent < diff10Cent && diff20Cent < diff50Cent) {
+                    bestGuessType = 4; // 20c
+                } else {
+                    bestGuessType = 5; // 50c
+                }
+                
+                // Only count if not already counted
+                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, bestGuessType + 1, 1)) {
+                    counters[bestGuessType]++;
+                    printf("COIN COUNTED: %d cents (GOLD contour) | Diam: %.1f | Area: %d | Circularity: %.2f\n",
+                        bestGuessType == 3 ? 10 : (bestGuessType == 4 ? 20 : 50), 
+                        diameter, goldBlobs[i].area, circularity);
+                }
+                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                return true;
+            }
+            
+            // Regular classification with adaptive tolerance
+            if (diameter >= D_10CENT * (1.0f - tolerance) && diameter <= D_10CENT * (1.0f + tolerance)) {
+                // 10 cents (index 3)
+                // Only count if not already counted - passing 1 to mark as counted
+                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, 4, 1)) {
+                    counters[3]++;
+                    printf("[DEBUG] COIN COUNTED: 10 cents (GOLD) | Diam: %.1f | Area: %d | Circ: %.2f | Total now: %d\n",
+                           diameter, goldBlobs[i].area, circularity, counters[3]);
+                } else {
+                    printf("[DEBUG] Detected (already counted): 10 cents at (%d,%d)\n", 
+                           goldBlobs[i].xc, goldBlobs[i].yc);
+                }
+                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                return true;
+            }
+            else if (diameter >= D_20CENT * (1.0f - tolerance) && diameter <= D_20CENT * (1.0f + tolerance)) {
+                // 20 cents (index 4)
+                // Only count if not already counted - passing 1 to mark as counted
+                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, 5, 1)) {
+                    counters[4]++;
+                    printf("[DEBUG] COIN COUNTED: 20 cents (GOLD) | Diam: %.1f | Area: %d | Circ: %.2f | Total now: %d\n",
+                           diameter, goldBlobs[i].area, circularity, counters[4]);
+                } else {
+                    printf("[DEBUG] Detected (already counted): 20 cents at (%d,%d)\n", 
+                           goldBlobs[i].xc, goldBlobs[i].yc);
+                }
+                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                return true;
+            }
+            else if (diameter >= D_50CENT * (1.0f - tolerance) && diameter <= D_50CENT * (1.0f + tolerance)) {
+                // 50 cents (index 5)
+                // Only count if not already counted - passing 1 to mark as counted
+                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, 6, 1)) {
+                    counters[5]++;
+                    printf("[DEBUG] COIN COUNTED: 50 cents (GOLD) | Diam: %.1f | Area: %d | Circ: %.2f | Total now: %d\n",
+                           diameter, goldBlobs[i].area, circularity, counters[5]);
+                } else {
+                    printf("[DEBUG] Detected (already counted): 50 cents at (%d,%d)\n", 
+                           goldBlobs[i].xc, goldBlobs[i].yc);
+                }
+                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+
+
+#ifdef __cplusplus
+}
+#endif

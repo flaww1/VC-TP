@@ -100,9 +100,6 @@ int main(void)
 
     // Create a window for displaying the video - make it resizable
     cv::namedWindow("Coin Detector", cv::WINDOW_NORMAL);
-    
-    // Set window size to be larger (1.5x original size)
-    cv::resizeWindow("Coin Detector", width * 1.5, height * 1.5);
 
     // Allocate memory for coin tracking
     int *excludeList = (int *)calloc(MAX_COINS * 2, sizeof(int));
@@ -227,6 +224,12 @@ int main(void)
             cv::putText(frame, ss.str(), cv::Point(15, 60), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 2);
             cv::putText(frame, ss.str(), cv::Point(15, 60), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 1);
             
+            // Add frame counter and detection mode
+            ss.str("");
+            ss << "Frame: " << frameNumber << "/" << totalFrames << " | Press 'p' to pause";
+            cv::putText(frame, ss.str(), cv::Point(15, frame.rows - 15), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 0), 2);
+            cv::putText(frame, ss.str(), cv::Point(15, frame.rows - 15), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
+            
             // Write to output video
             if (outputVideo.isOpened()) {
                 outputVideo.write(frame);
@@ -251,7 +254,7 @@ int main(void)
             std::cout << "\nSaved screenshot to " << screenshotName << std::endl;
         }
         else if (key == 'f') {
-            // Toggle fullscreen mode
+            // Toggle fullscreen mode (one of our allowed 3 functions)
             isFullscreen = !isFullscreen;
             cv::setWindowProperty("Coin Detector", cv::WND_PROP_FULLSCREEN, 
                                  isFullscreen ? cv::WINDOW_FULLSCREEN : cv::WINDOW_NORMAL);

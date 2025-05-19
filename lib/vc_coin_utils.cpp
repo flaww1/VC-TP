@@ -42,62 +42,90 @@ void IncrementFrameCounter()
 }
 
 /**
- * @brief Verifica se uma moeda já foi detectada anteriormente e já foi contada
- * @param x Coordenada X da moeda
- * @param y Coordenada Y da moeda
- * @param coinType Tipo de moeda (1-8)
- * @return 1 se já detectada e contada, 0 caso contrário
+ * @brief Getter para o contador de frames
+ * @return O valor atual do contador de frames
  */
-int IsCoinAlreadyDetected(int x, int y, int coinType)
+int GetFrameCounter()
 {
-    const int distanceThreshold = 50;  // Limiar de distância para considerar a mesma moeda
+    return frameCounter;
+}
+
+/**
+ * @brief Enhanced function to check if a coin was already detected and counted
+ * 
+ * @param x X coordinate of coin center
+ * @param y Y coordinate of coin center
+ * @param coinType Type of coin (1-6)
+ * @param countIt Whether to mark this coin as counted (1) or just check (0)
+ * @return 1 if already counted, 0 if new or not yet counted
+ */
+int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt)
+{
+    const int distanceThreshold = 50;  // Proximity threshold (pixels)
     const int distThresholdSq = distanceThreshold * distanceThreshold;
-    const int frameMemory = 30;        // Número de frames para lembrar moedas detectadas
+    const int frameMemory = 60;        // Remember coins for this many frames
     
-    // First check if we've already counted this coin before
+    int existingIndex = -1;
+    int emptyIndex = -1;
+    
+    // First pass: look for the same coin in our tracking array
     for (int i = 0; i < MAX_TRACKED_COINS; i++) {
-        // Ignorar entradas vazias
+        // Record first empty slot
+        if (emptyIndex == -1 && detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) {
+            emptyIndex = i;
+            continue;
+        }
+        
+        // Skip empty entries
         if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) 
             continue;
             
-        // Verificar se é o mesmo tipo de moeda e está próximo
+        // Check if this is the same coin type and position
         if (detectedCoins[i][2] == coinType) {
             int dx = detectedCoins[i][0] - x;
             int dy = detectedCoins[i][1] - y;
             int distSq = dx*dx + dy*dy;
             
-            // If this coin is close to a previously counted one, it's the same coin
+            // If nearby, this could be the same coin
             if (distSq <= distThresholdSq) {
-                // Atualiza a posição e frame
-                detectedCoins[i][0] = x;
-                detectedCoins[i][1] = y;
-                detectedCoins[i][3] = frameCounter;
-                
-                // Check if already counted
-                if (detectedCoins[i][4] == 1) {
-                    return 1;  // Coin already counted, don't count again
+                // Check if it's still within our time window
+                if (frameCounter - detectedCoins[i][3] < frameMemory || 
+                    detectedCoins[i][3] > frameCounter) { // Handle counter reset
+                    
+                    existingIndex = i;
+                    break;
                 }
-                
-                // Mark as counted
-                detectedCoins[i][4] = 1;
-                return 0;  // First time counting this coin
             }
         }
     }
     
-    // Não encontrada, adiciona nova moeda no primeiro slot vazio
-    for (int i = 0; i < MAX_TRACKED_COINS; i++) {
-        if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) {
-            detectedCoins[i][0] = x;
-            detectedCoins[i][1] = y;
-            detectedCoins[i][2] = coinType;
-            detectedCoins[i][3] = frameCounter;
-            detectedCoins[i][4] = 1;  // Mark as counted
-            break;
+    // If we found the coin in our tracking system
+    if (existingIndex >= 0) {
+        // Update position and frame seen
+        detectedCoins[existingIndex][0] = x;
+        detectedCoins[existingIndex][1] = y;
+        detectedCoins[existingIndex][3] = frameCounter;
+        
+        // If we want to count and it's not already counted
+        if (countIt && detectedCoins[existingIndex][4] == 0) {
+            detectedCoins[existingIndex][4] = 1;  // Mark as counted
+            return 0;  // Indicate this is a "new" count
         }
+        
+        // Already counted or not counting now
+        return detectedCoins[existingIndex][4];  // Return counted status (1 if counted)
     }
     
-    return 0;  // Nova detecção
+    // Not found - add to tracking if we have an empty slot
+    if (emptyIndex >= 0) {
+        detectedCoins[emptyIndex][0] = x;
+        detectedCoins[emptyIndex][1] = y;
+        detectedCoins[emptyIndex][2] = coinType;
+        detectedCoins[emptyIndex][3] = frameCounter;
+        detectedCoins[emptyIndex][4] = countIt ? 1 : 0;  // Mark counted if requested
+    }
+    
+    return 0;  // New coin
 }
 
 /**
