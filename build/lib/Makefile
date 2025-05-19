@@ -85,6 +85,51 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # The main all target
 all: cmake_check_build_system
 	cd /home/flavio/Downloads/TrabalhoVC/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/flavio/Downloads/TrabalhoVC/build/CMakeFiles /home/flavio/Downloads/TrabalhoVC/build/lib//CMakeFiles/progress.marks
@@ -130,53 +175,53 @@ vclib/fast:
 	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/build
 .PHONY : vclib/fast
 
-vc_analysis_functions.o: vc_analysis_functions.cpp.o
-.PHONY : vc_analysis_functions.o
+vc_blob.o: vc_blob.cpp.o
+.PHONY : vc_blob.o
 
 # target to build an object file
-vc_analysis_functions.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o
-.PHONY : vc_analysis_functions.cpp.o
+vc_blob.cpp.o:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_blob.cpp.o
+.PHONY : vc_blob.cpp.o
 
-vc_analysis_functions.i: vc_analysis_functions.cpp.i
-.PHONY : vc_analysis_functions.i
+vc_blob.i: vc_blob.cpp.i
+.PHONY : vc_blob.i
 
 # target to preprocess a source file
-vc_analysis_functions.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.i
-.PHONY : vc_analysis_functions.cpp.i
+vc_blob.cpp.i:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_blob.cpp.i
+.PHONY : vc_blob.cpp.i
 
-vc_analysis_functions.s: vc_analysis_functions.cpp.s
-.PHONY : vc_analysis_functions.s
+vc_blob.s: vc_blob.cpp.s
+.PHONY : vc_blob.s
 
 # target to generate assembly for a file
-vc_analysis_functions.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.s
-.PHONY : vc_analysis_functions.cpp.s
+vc_blob.cpp.s:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_blob.cpp.s
+.PHONY : vc_blob.cpp.s
 
-vc_binary_functions.o: vc_binary_functions.cpp.o
-.PHONY : vc_binary_functions.o
+vc_coin.o: vc_coin.cpp.o
+.PHONY : vc_coin.o
 
 # target to build an object file
-vc_binary_functions.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o
-.PHONY : vc_binary_functions.cpp.o
+vc_coin.cpp.o:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin.cpp.o
+.PHONY : vc_coin.cpp.o
 
-vc_binary_functions.i: vc_binary_functions.cpp.i
-.PHONY : vc_binary_functions.i
+vc_coin.i: vc_coin.cpp.i
+.PHONY : vc_coin.i
 
 # target to preprocess a source file
-vc_binary_functions.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.i
-.PHONY : vc_binary_functions.cpp.i
+vc_coin.cpp.i:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin.cpp.i
+.PHONY : vc_coin.cpp.i
 
-vc_binary_functions.s: vc_binary_functions.cpp.s
-.PHONY : vc_binary_functions.s
+vc_coin.s: vc_coin.cpp.s
+.PHONY : vc_coin.s
 
 # target to generate assembly for a file
-vc_binary_functions.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.s
-.PHONY : vc_binary_functions.cpp.s
+vc_coin.cpp.s:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin.cpp.s
+.PHONY : vc_coin.cpp.s
 
 vc_coin_detection.o: vc_coin_detection.cpp.o
 .PHONY : vc_coin_detection.o
@@ -202,125 +247,77 @@ vc_coin_detection.cpp.s:
 	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.s
 .PHONY : vc_coin_detection.cpp.s
 
-vc_coin_functions.o: vc_coin_functions.cpp.o
-.PHONY : vc_coin_functions.o
+vc_core.o: vc_core.cpp.o
+.PHONY : vc_core.o
 
 # target to build an object file
-vc_coin_functions.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o
-.PHONY : vc_coin_functions.cpp.o
+vc_core.cpp.o:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_core.cpp.o
+.PHONY : vc_core.cpp.o
 
-vc_coin_functions.i: vc_coin_functions.cpp.i
-.PHONY : vc_coin_functions.i
+vc_core.i: vc_core.cpp.i
+.PHONY : vc_core.i
 
 # target to preprocess a source file
-vc_coin_functions.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.i
-.PHONY : vc_coin_functions.cpp.i
+vc_core.cpp.i:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_core.cpp.i
+.PHONY : vc_core.cpp.i
 
-vc_coin_functions.s: vc_coin_functions.cpp.s
-.PHONY : vc_coin_functions.s
+vc_core.s: vc_core.cpp.s
+.PHONY : vc_core.s
 
 # target to generate assembly for a file
-vc_coin_functions.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.s
-.PHONY : vc_coin_functions.cpp.s
+vc_core.cpp.s:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_core.cpp.s
+.PHONY : vc_core.cpp.s
 
-vc_coin_utils.o: vc_coin_utils.cpp.o
-.PHONY : vc_coin_utils.o
+vc_frame_processor.o: vc_frame_processor.cpp.o
+.PHONY : vc_frame_processor.o
 
 # target to build an object file
-vc_coin_utils.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o
-.PHONY : vc_coin_utils.cpp.o
+vc_frame_processor.cpp.o:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o
+.PHONY : vc_frame_processor.cpp.o
 
-vc_coin_utils.i: vc_coin_utils.cpp.i
-.PHONY : vc_coin_utils.i
+vc_frame_processor.i: vc_frame_processor.cpp.i
+.PHONY : vc_frame_processor.i
 
 # target to preprocess a source file
-vc_coin_utils.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.i
-.PHONY : vc_coin_utils.cpp.i
+vc_frame_processor.cpp.i:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.i
+.PHONY : vc_frame_processor.cpp.i
 
-vc_coin_utils.s: vc_coin_utils.cpp.s
-.PHONY : vc_coin_utils.s
+vc_frame_processor.s: vc_frame_processor.cpp.s
+.PHONY : vc_frame_processor.s
 
 # target to generate assembly for a file
-vc_coin_utils.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.s
-.PHONY : vc_coin_utils.cpp.s
+vc_frame_processor.cpp.s:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.s
+.PHONY : vc_frame_processor.cpp.s
 
-vc_conversion_functions.o: vc_conversion_functions.cpp.o
-.PHONY : vc_conversion_functions.o
+vc_utils.o: vc_utils.cpp.o
+.PHONY : vc_utils.o
 
 # target to build an object file
-vc_conversion_functions.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o
-.PHONY : vc_conversion_functions.cpp.o
+vc_utils.cpp.o:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_utils.cpp.o
+.PHONY : vc_utils.cpp.o
 
-vc_conversion_functions.i: vc_conversion_functions.cpp.i
-.PHONY : vc_conversion_functions.i
-
-# target to preprocess a source file
-vc_conversion_functions.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.i
-.PHONY : vc_conversion_functions.cpp.i
-
-vc_conversion_functions.s: vc_conversion_functions.cpp.s
-.PHONY : vc_conversion_functions.s
-
-# target to generate assembly for a file
-vc_conversion_functions.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.s
-.PHONY : vc_conversion_functions.cpp.s
-
-vc_core_functions.o: vc_core_functions.cpp.o
-.PHONY : vc_core_functions.o
-
-# target to build an object file
-vc_core_functions.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o
-.PHONY : vc_core_functions.cpp.o
-
-vc_core_functions.i: vc_core_functions.cpp.i
-.PHONY : vc_core_functions.i
+vc_utils.i: vc_utils.cpp.i
+.PHONY : vc_utils.i
 
 # target to preprocess a source file
-vc_core_functions.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.i
-.PHONY : vc_core_functions.cpp.i
+vc_utils.cpp.i:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_utils.cpp.i
+.PHONY : vc_utils.cpp.i
 
-vc_core_functions.s: vc_core_functions.cpp.s
-.PHONY : vc_core_functions.s
-
-# target to generate assembly for a file
-vc_core_functions.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.s
-.PHONY : vc_core_functions.cpp.s
-
-vc_filter_functions.o: vc_filter_functions.cpp.o
-.PHONY : vc_filter_functions.o
-
-# target to build an object file
-vc_filter_functions.cpp.o:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o
-.PHONY : vc_filter_functions.cpp.o
-
-vc_filter_functions.i: vc_filter_functions.cpp.i
-.PHONY : vc_filter_functions.i
-
-# target to preprocess a source file
-vc_filter_functions.cpp.i:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.i
-.PHONY : vc_filter_functions.cpp.i
-
-vc_filter_functions.s: vc_filter_functions.cpp.s
-.PHONY : vc_filter_functions.s
+vc_utils.s: vc_utils.cpp.s
+.PHONY : vc_utils.s
 
 # target to generate assembly for a file
-vc_filter_functions.cpp.s:
-	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.s
-.PHONY : vc_filter_functions.cpp.s
+vc_utils.cpp.s:
+	cd /home/flavio/Downloads/TrabalhoVC/build && $(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/vc_utils.cpp.s
+.PHONY : vc_utils.cpp.s
 
 # Help Target
 help:
@@ -329,32 +326,30 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... install"
+	@echo "... install/local"
+	@echo "... install/strip"
+	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... vclib"
-	@echo "... vc_analysis_functions.o"
-	@echo "... vc_analysis_functions.i"
-	@echo "... vc_analysis_functions.s"
-	@echo "... vc_binary_functions.o"
-	@echo "... vc_binary_functions.i"
-	@echo "... vc_binary_functions.s"
+	@echo "... vc_blob.o"
+	@echo "... vc_blob.i"
+	@echo "... vc_blob.s"
+	@echo "... vc_coin.o"
+	@echo "... vc_coin.i"
+	@echo "... vc_coin.s"
 	@echo "... vc_coin_detection.o"
 	@echo "... vc_coin_detection.i"
 	@echo "... vc_coin_detection.s"
-	@echo "... vc_coin_functions.o"
-	@echo "... vc_coin_functions.i"
-	@echo "... vc_coin_functions.s"
-	@echo "... vc_coin_utils.o"
-	@echo "... vc_coin_utils.i"
-	@echo "... vc_coin_utils.s"
-	@echo "... vc_conversion_functions.o"
-	@echo "... vc_conversion_functions.i"
-	@echo "... vc_conversion_functions.s"
-	@echo "... vc_core_functions.o"
-	@echo "... vc_core_functions.i"
-	@echo "... vc_core_functions.s"
-	@echo "... vc_filter_functions.o"
-	@echo "... vc_filter_functions.i"
-	@echo "... vc_filter_functions.s"
+	@echo "... vc_core.o"
+	@echo "... vc_core.i"
+	@echo "... vc_core.s"
+	@echo "... vc_frame_processor.o"
+	@echo "... vc_frame_processor.i"
+	@echo "... vc_frame_processor.s"
+	@echo "... vc_utils.o"
+	@echo "... vc_utils.i"
+	@echo "... vc_utils.s"
 .PHONY : help
 
 

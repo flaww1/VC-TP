@@ -72,108 +72,66 @@ include lib/CMakeFiles/vclib.dir/flags.make
 lib/CMakeFiles/vclib.dir/codegen:
 .PHONY : lib/CMakeFiles/vclib.dir/codegen
 
-lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_core_functions.cpp
-lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o -MF CMakeFiles/vclib.dir/vc_core_functions.cpp.o.d -o CMakeFiles/vclib.dir/vc_core_functions.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_core_functions.cpp
+lib/CMakeFiles/vclib.dir/vc_blob.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
+lib/CMakeFiles/vclib.dir/vc_blob.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_blob.cpp
+lib/CMakeFiles/vclib.dir/vc_blob.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object lib/CMakeFiles/vclib.dir/vc_blob.cpp.o"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_blob.cpp.o -MF CMakeFiles/vclib.dir/vc_blob.cpp.o.d -o CMakeFiles/vclib.dir/vc_blob.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_blob.cpp
 
-lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_core_functions.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_core_functions.cpp > CMakeFiles/vclib.dir/vc_core_functions.cpp.i
+lib/CMakeFiles/vclib.dir/vc_blob.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_blob.cpp.i"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_blob.cpp > CMakeFiles/vclib.dir/vc_blob.cpp.i
 
-lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_core_functions.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_core_functions.cpp -o CMakeFiles/vclib.dir/vc_core_functions.cpp.s
+lib/CMakeFiles/vclib.dir/vc_blob.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_blob.cpp.s"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_blob.cpp -o CMakeFiles/vclib.dir/vc_blob.cpp.s
 
-lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_conversion_functions.cpp
-lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o -MF CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o.d -o CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_conversion_functions.cpp
+lib/CMakeFiles/vclib.dir/vc_coin.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
+lib/CMakeFiles/vclib.dir/vc_coin.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_coin.cpp
+lib/CMakeFiles/vclib.dir/vc_coin.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object lib/CMakeFiles/vclib.dir/vc_coin.cpp.o"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_coin.cpp.o -MF CMakeFiles/vclib.dir/vc_coin.cpp.o.d -o CMakeFiles/vclib.dir/vc_coin.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_coin.cpp
 
-lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_conversion_functions.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_conversion_functions.cpp > CMakeFiles/vclib.dir/vc_conversion_functions.cpp.i
+lib/CMakeFiles/vclib.dir/vc_coin.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_coin.cpp.i"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_coin.cpp > CMakeFiles/vclib.dir/vc_coin.cpp.i
 
-lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_conversion_functions.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_conversion_functions.cpp -o CMakeFiles/vclib.dir/vc_conversion_functions.cpp.s
+lib/CMakeFiles/vclib.dir/vc_coin.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_coin.cpp.s"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_coin.cpp -o CMakeFiles/vclib.dir/vc_coin.cpp.s
 
-lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_binary_functions.cpp
-lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o -MF CMakeFiles/vclib.dir/vc_binary_functions.cpp.o.d -o CMakeFiles/vclib.dir/vc_binary_functions.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_binary_functions.cpp
+lib/CMakeFiles/vclib.dir/vc_core.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
+lib/CMakeFiles/vclib.dir/vc_core.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_core.cpp
+lib/CMakeFiles/vclib.dir/vc_core.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object lib/CMakeFiles/vclib.dir/vc_core.cpp.o"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_core.cpp.o -MF CMakeFiles/vclib.dir/vc_core.cpp.o.d -o CMakeFiles/vclib.dir/vc_core.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_core.cpp
 
-lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_binary_functions.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_binary_functions.cpp > CMakeFiles/vclib.dir/vc_binary_functions.cpp.i
+lib/CMakeFiles/vclib.dir/vc_core.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_core.cpp.i"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_core.cpp > CMakeFiles/vclib.dir/vc_core.cpp.i
 
-lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_binary_functions.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_binary_functions.cpp -o CMakeFiles/vclib.dir/vc_binary_functions.cpp.s
+lib/CMakeFiles/vclib.dir/vc_core.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_core.cpp.s"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_core.cpp -o CMakeFiles/vclib.dir/vc_core.cpp.s
 
-lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_filter_functions.cpp
-lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o -MF CMakeFiles/vclib.dir/vc_filter_functions.cpp.o.d -o CMakeFiles/vclib.dir/vc_filter_functions.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_filter_functions.cpp
+lib/CMakeFiles/vclib.dir/vc_utils.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
+lib/CMakeFiles/vclib.dir/vc_utils.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_utils.cpp
+lib/CMakeFiles/vclib.dir/vc_utils.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object lib/CMakeFiles/vclib.dir/vc_utils.cpp.o"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_utils.cpp.o -MF CMakeFiles/vclib.dir/vc_utils.cpp.o.d -o CMakeFiles/vclib.dir/vc_utils.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_utils.cpp
 
-lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_filter_functions.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_filter_functions.cpp > CMakeFiles/vclib.dir/vc_filter_functions.cpp.i
+lib/CMakeFiles/vclib.dir/vc_utils.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_utils.cpp.i"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_utils.cpp > CMakeFiles/vclib.dir/vc_utils.cpp.i
 
-lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_filter_functions.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_filter_functions.cpp -o CMakeFiles/vclib.dir/vc_filter_functions.cpp.s
-
-lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_analysis_functions.cpp
-lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o -MF CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o.d -o CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_analysis_functions.cpp
-
-lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_analysis_functions.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_analysis_functions.cpp > CMakeFiles/vclib.dir/vc_analysis_functions.cpp.i
-
-lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_analysis_functions.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_analysis_functions.cpp -o CMakeFiles/vclib.dir/vc_analysis_functions.cpp.s
-
-lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_functions.cpp
-lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o -MF CMakeFiles/vclib.dir/vc_coin_functions.cpp.o.d -o CMakeFiles/vclib.dir/vc_coin_functions.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_functions.cpp
-
-lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_coin_functions.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_functions.cpp > CMakeFiles/vclib.dir/vc_coin_functions.cpp.i
-
-lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_coin_functions.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_functions.cpp -o CMakeFiles/vclib.dir/vc_coin_functions.cpp.s
-
-lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
-lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_utils.cpp
-lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o -MF CMakeFiles/vclib.dir/vc_coin_utils.cpp.o.d -o CMakeFiles/vclib.dir/vc_coin_utils.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_utils.cpp
-
-lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_coin_utils.cpp.i"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_utils.cpp > CMakeFiles/vclib.dir/vc_coin_utils.cpp.i
-
-lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_coin_utils.cpp.s"
-	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_utils.cpp -o CMakeFiles/vclib.dir/vc_coin_utils.cpp.s
+lib/CMakeFiles/vclib.dir/vc_utils.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_utils.cpp.s"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_utils.cpp -o CMakeFiles/vclib.dir/vc_utils.cpp.s
 
 lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
 lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_detection.cpp
 lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o"
 	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o -MF CMakeFiles/vclib.dir/vc_coin_detection.cpp.o.d -o CMakeFiles/vclib.dir/vc_coin_detection.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_detection.cpp
 
 lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.i: cmake_force
@@ -184,31 +142,41 @@ lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_coin_detection.cpp.s"
 	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_coin_detection.cpp -o CMakeFiles/vclib.dir/vc_coin_detection.cpp.s
 
+lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o: lib/CMakeFiles/vclib.dir/flags.make
+lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o: /home/flavio/Downloads/TrabalhoVC/lib/vc_frame_processor.cpp
+lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o: lib/CMakeFiles/vclib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o -MF CMakeFiles/vclib.dir/vc_frame_processor.cpp.o.d -o CMakeFiles/vclib.dir/vc_frame_processor.cpp.o -c /home/flavio/Downloads/TrabalhoVC/lib/vc_frame_processor.cpp
+
+lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vclib.dir/vc_frame_processor.cpp.i"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/flavio/Downloads/TrabalhoVC/lib/vc_frame_processor.cpp > CMakeFiles/vclib.dir/vc_frame_processor.cpp.i
+
+lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vclib.dir/vc_frame_processor.cpp.s"
+	cd /home/flavio/Downloads/TrabalhoVC/build/lib && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/flavio/Downloads/TrabalhoVC/lib/vc_frame_processor.cpp -o CMakeFiles/vclib.dir/vc_frame_processor.cpp.s
+
 # Object files for target vclib
 vclib_OBJECTS = \
-"CMakeFiles/vclib.dir/vc_core_functions.cpp.o" \
-"CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o" \
-"CMakeFiles/vclib.dir/vc_binary_functions.cpp.o" \
-"CMakeFiles/vclib.dir/vc_filter_functions.cpp.o" \
-"CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o" \
-"CMakeFiles/vclib.dir/vc_coin_functions.cpp.o" \
-"CMakeFiles/vclib.dir/vc_coin_utils.cpp.o" \
-"CMakeFiles/vclib.dir/vc_coin_detection.cpp.o"
+"CMakeFiles/vclib.dir/vc_blob.cpp.o" \
+"CMakeFiles/vclib.dir/vc_coin.cpp.o" \
+"CMakeFiles/vclib.dir/vc_core.cpp.o" \
+"CMakeFiles/vclib.dir/vc_utils.cpp.o" \
+"CMakeFiles/vclib.dir/vc_coin_detection.cpp.o" \
+"CMakeFiles/vclib.dir/vc_frame_processor.cpp.o"
 
 # External object files for target vclib
 vclib_EXTERNAL_OBJECTS =
 
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o
-lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o
+lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_blob.cpp.o
+lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_coin.cpp.o
+lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_core.cpp.o
+lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_utils.cpp.o
 lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o
+lib/libvclib.a: lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o
 lib/libvclib.a: lib/CMakeFiles/vclib.dir/build.make
 lib/libvclib.a: lib/CMakeFiles/vclib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking CXX static library libvclib.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX static library libvclib.a"
 	cd /home/flavio/Downloads/TrabalhoVC/build/lib && $(CMAKE_COMMAND) -P CMakeFiles/vclib.dir/cmake_clean_target.cmake
 	cd /home/flavio/Downloads/TrabalhoVC/build/lib && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/vclib.dir/link.txt --verbose=$(VERBOSE)
 

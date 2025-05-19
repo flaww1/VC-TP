@@ -1,0 +1,2 @@
+/usr/bin/ar qc libvc.a CMakeFiles/vc.dir/lib/vc_blob.cpp.o CMakeFiles/vc.dir/lib/vc_coin.cpp.o CMakeFiles/vc.dir/lib/vc_coin_detection.cpp.o CMakeFiles/vc.dir/lib/vc_core.cpp.o CMakeFiles/vc.dir/lib/vc_frame_processor.cpp.o CMakeFiles/vc.dir/lib/vc_utils.cpp.o
+/usr/bin/ranlib libvc.a

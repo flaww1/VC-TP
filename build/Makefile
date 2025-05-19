@@ -85,6 +85,51 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 .PHONY : rebuild_cache/fast
 
+# Special rule for the target list_install_components
+list_install_components:
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Available install components are: \"Unspecified\""
+.PHONY : list_install_components
+
+# Special rule for the target list_install_components
+list_install_components/fast: list_install_components
+.PHONY : list_install_components/fast
+
+# Special rule for the target install
+install: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install
+
+# Special rule for the target install
+install/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
+	/usr/bin/cmake -P cmake_install.cmake
+.PHONY : install/fast
+
+# Special rule for the target install/local
+install/local: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local
+
+# Special rule for the target install/local
+install/local/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+.PHONY : install/local/fast
+
+# Special rule for the target install/strip
+install/strip: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip
+
+# Special rule for the target install/strip
+install/strip/fast: preinstall/fast
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+.PHONY : install/strip/fast
+
 # The main all target
 all: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/flavio/Downloads/TrabalhoVC/build/CMakeFiles /home/flavio/Downloads/TrabalhoVC/build//CMakeFiles/progress.marks
@@ -117,17 +162,30 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named VisaoComputador
+# Target rules for targets named vc
 
 # Build rule for target.
-VisaoComputador: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 VisaoComputador
-.PHONY : VisaoComputador
+vc: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 vc
+.PHONY : vc
 
 # fast build rule for target.
-VisaoComputador/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/VisaoComputador.dir/build.make CMakeFiles/VisaoComputador.dir/build
-.PHONY : VisaoComputador/fast
+vc/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/build
+.PHONY : vc/fast
+
+#=============================================================================
+# Target rules for targets named coin_detector
+
+# Build rule for target.
+coin_detector: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 coin_detector
+.PHONY : coin_detector
+
+# fast build rule for target.
+coin_detector/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/coin_detector.dir/build.make CMakeFiles/coin_detector.dir/build
+.PHONY : coin_detector/fast
 
 #=============================================================================
 # Target rules for targets named vclib
@@ -142,29 +200,173 @@ vclib/fast:
 	$(MAKE) $(MAKESILENT) -f lib/CMakeFiles/vclib.dir/build.make lib/CMakeFiles/vclib.dir/build
 .PHONY : vclib/fast
 
-main.o: main.cpp.o
-.PHONY : main.o
+lib/vc_blob.o: lib/vc_blob.cpp.o
+.PHONY : lib/vc_blob.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/VisaoComputador.dir/build.make CMakeFiles/VisaoComputador.dir/main.cpp.o
-.PHONY : main.cpp.o
+lib/vc_blob.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_blob.cpp.o
+.PHONY : lib/vc_blob.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+lib/vc_blob.i: lib/vc_blob.cpp.i
+.PHONY : lib/vc_blob.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/VisaoComputador.dir/build.make CMakeFiles/VisaoComputador.dir/main.cpp.i
-.PHONY : main.cpp.i
+lib/vc_blob.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_blob.cpp.i
+.PHONY : lib/vc_blob.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+lib/vc_blob.s: lib/vc_blob.cpp.s
+.PHONY : lib/vc_blob.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/VisaoComputador.dir/build.make CMakeFiles/VisaoComputador.dir/main.cpp.s
-.PHONY : main.cpp.s
+lib/vc_blob.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_blob.cpp.s
+.PHONY : lib/vc_blob.cpp.s
+
+lib/vc_coin.o: lib/vc_coin.cpp.o
+.PHONY : lib/vc_coin.o
+
+# target to build an object file
+lib/vc_coin.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_coin.cpp.o
+.PHONY : lib/vc_coin.cpp.o
+
+lib/vc_coin.i: lib/vc_coin.cpp.i
+.PHONY : lib/vc_coin.i
+
+# target to preprocess a source file
+lib/vc_coin.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_coin.cpp.i
+.PHONY : lib/vc_coin.cpp.i
+
+lib/vc_coin.s: lib/vc_coin.cpp.s
+.PHONY : lib/vc_coin.s
+
+# target to generate assembly for a file
+lib/vc_coin.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_coin.cpp.s
+.PHONY : lib/vc_coin.cpp.s
+
+lib/vc_coin_detection.o: lib/vc_coin_detection.cpp.o
+.PHONY : lib/vc_coin_detection.o
+
+# target to build an object file
+lib/vc_coin_detection.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_coin_detection.cpp.o
+.PHONY : lib/vc_coin_detection.cpp.o
+
+lib/vc_coin_detection.i: lib/vc_coin_detection.cpp.i
+.PHONY : lib/vc_coin_detection.i
+
+# target to preprocess a source file
+lib/vc_coin_detection.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_coin_detection.cpp.i
+.PHONY : lib/vc_coin_detection.cpp.i
+
+lib/vc_coin_detection.s: lib/vc_coin_detection.cpp.s
+.PHONY : lib/vc_coin_detection.s
+
+# target to generate assembly for a file
+lib/vc_coin_detection.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_coin_detection.cpp.s
+.PHONY : lib/vc_coin_detection.cpp.s
+
+lib/vc_core.o: lib/vc_core.cpp.o
+.PHONY : lib/vc_core.o
+
+# target to build an object file
+lib/vc_core.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_core.cpp.o
+.PHONY : lib/vc_core.cpp.o
+
+lib/vc_core.i: lib/vc_core.cpp.i
+.PHONY : lib/vc_core.i
+
+# target to preprocess a source file
+lib/vc_core.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_core.cpp.i
+.PHONY : lib/vc_core.cpp.i
+
+lib/vc_core.s: lib/vc_core.cpp.s
+.PHONY : lib/vc_core.s
+
+# target to generate assembly for a file
+lib/vc_core.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_core.cpp.s
+.PHONY : lib/vc_core.cpp.s
+
+lib/vc_frame_processor.o: lib/vc_frame_processor.cpp.o
+.PHONY : lib/vc_frame_processor.o
+
+# target to build an object file
+lib/vc_frame_processor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_frame_processor.cpp.o
+.PHONY : lib/vc_frame_processor.cpp.o
+
+lib/vc_frame_processor.i: lib/vc_frame_processor.cpp.i
+.PHONY : lib/vc_frame_processor.i
+
+# target to preprocess a source file
+lib/vc_frame_processor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_frame_processor.cpp.i
+.PHONY : lib/vc_frame_processor.cpp.i
+
+lib/vc_frame_processor.s: lib/vc_frame_processor.cpp.s
+.PHONY : lib/vc_frame_processor.s
+
+# target to generate assembly for a file
+lib/vc_frame_processor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_frame_processor.cpp.s
+.PHONY : lib/vc_frame_processor.cpp.s
+
+lib/vc_utils.o: lib/vc_utils.cpp.o
+.PHONY : lib/vc_utils.o
+
+# target to build an object file
+lib/vc_utils.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_utils.cpp.o
+.PHONY : lib/vc_utils.cpp.o
+
+lib/vc_utils.i: lib/vc_utils.cpp.i
+.PHONY : lib/vc_utils.i
+
+# target to preprocess a source file
+lib/vc_utils.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_utils.cpp.i
+.PHONY : lib/vc_utils.cpp.i
+
+lib/vc_utils.s: lib/vc_utils.cpp.s
+.PHONY : lib/vc_utils.s
+
+# target to generate assembly for a file
+lib/vc_utils.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vc.dir/build.make CMakeFiles/vc.dir/lib/vc_utils.cpp.s
+.PHONY : lib/vc_utils.cpp.s
+
+src/main.o: src/main.cpp.o
+.PHONY : src/main.o
+
+# target to build an object file
+src/main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/coin_detector.dir/build.make CMakeFiles/coin_detector.dir/src/main.cpp.o
+.PHONY : src/main.cpp.o
+
+src/main.i: src/main.cpp.i
+.PHONY : src/main.i
+
+# target to preprocess a source file
+src/main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/coin_detector.dir/build.make CMakeFiles/coin_detector.dir/src/main.cpp.i
+.PHONY : src/main.cpp.i
+
+src/main.s: src/main.cpp.s
+.PHONY : src/main.s
+
+# target to generate assembly for a file
+src/main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/coin_detector.dir/build.make CMakeFiles/coin_detector.dir/src/main.cpp.s
+.PHONY : src/main.cpp.s
 
 # Help Target
 help:
@@ -173,12 +375,35 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
+	@echo "... install"
+	@echo "... install/local"
+	@echo "... install/strip"
+	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... VisaoComputador"
+	@echo "... coin_detector"
+	@echo "... vc"
 	@echo "... vclib"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... lib/vc_blob.o"
+	@echo "... lib/vc_blob.i"
+	@echo "... lib/vc_blob.s"
+	@echo "... lib/vc_coin.o"
+	@echo "... lib/vc_coin.i"
+	@echo "... lib/vc_coin.s"
+	@echo "... lib/vc_coin_detection.o"
+	@echo "... lib/vc_coin_detection.i"
+	@echo "... lib/vc_coin_detection.s"
+	@echo "... lib/vc_core.o"
+	@echo "... lib/vc_core.i"
+	@echo "... lib/vc_core.s"
+	@echo "... lib/vc_frame_processor.o"
+	@echo "... lib/vc_frame_processor.i"
+	@echo "... lib/vc_frame_processor.s"
+	@echo "... lib/vc_utils.o"
+	@echo "... lib/vc_utils.i"
+	@echo "... lib/vc_utils.s"
+	@echo "... src/main.o"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
 .PHONY : help
 
 

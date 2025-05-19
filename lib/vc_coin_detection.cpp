@@ -1,65 +1,55 @@
 /**
  * @file vc_coin_detection.cpp
- * @brief Enhanced functions for coin detection and classification.
+ * @brief Algoritmos específicos para deteção e classificação de moedas.
  *
- * This file contains specialized functions to detect and classify
- * different types of coins with better robustness to lighting and positioning.
+ * Este ficheiro implementa funções especializadas para detetar diferentes tipos
+ * de moedas em imagens, classificando-as de acordo com o seu tamanho e cor.
  *
- * @author Original: Grupo 7 ( Daniel - 26432 / Maria - 26438 / Bruno - 26014 / Flávio - 21110)
+ * @author Grupo 7 ( Daniel - 26432 / Maria - 26438 / Bruno - 26014 / Flávio - 21110)
  * @date 2024/2025
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/core/types_c.h>
-
+#include <string.h>
 #include "vc.h"
 
-// These are declared in vc_coin_utils.cpp and need to be declared as extern here
-extern int MAX_TRACKED_COINS;
-extern int detectedCoins[][5];
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-// Constants for coin diameters (in pixels)
-const float D_1CENT = 122.0f;
-const float D_2CENT = 135.0f;
-const float D_5CENT = 152.0f;
-const float D_10CENT = 143.0f;
-const float D_20CENT = 160.0f;
-const float D_50CENT = 174.0f;
-const float D_1EURO = 185.0f;
-const float D_2EURO = 195.0f;
-const float BASE_TOLERANCE = 0.08f;
+// Constantes externas de vc_coin.cpp - diâmetros de referência para cada moeda
+extern const float DIAM_1CENT;
+extern const float DIAM_2CENT;
+extern const float DIAM_5CENT;
+extern const float DIAM_10CENT;
+extern const float DIAM_20CENT;
+extern const float DIAM_50CENT;
+extern const float DIAM_1EURO;
+extern const float DIAM_2EURO;
 
-// Maximum count of coins to track
-#define MAX_COINS 50
+// Declarações de funções externas necessárias para este ficheiro
+int getCoinTypeAtLocation(int x, int y);
+void correctGoldCoins(int x, int y, int *counters);
 
-// Simplified and optimized function to calculate adaptive tolerance
-float CalculateAdaptiveTolerance(int xc, int yc, int frameWidth, int frameHeight) {
-    float tolerance = BASE_TOLERANCE;
-    const int edgeMargin = 50;
-    
-    // Find minimum distance to any edge with fewer operations
-    float minDist = fminf(fminf((float)xc, (float)(frameWidth - xc)), 
-                         fminf((float)yc, (float)(frameHeight - yc)));
-    
-    // Only apply scaling if near edge (optimizes common case)
-    if (minDist < edgeMargin)
-        tolerance *= 1.0f + 0.5f * (1.0f - (minDist / edgeMargin));
-    
-    return tolerance;
-}
-
-// Optimized detect bronze coins function 
-bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs, 
-                             int *excludeList, int *counters, int distThresholdSq) {
+/**
+ * @brief Deteta moedas de cobre (1, 2, 5 cêntimos)
+ *
+ * Esta função analisa os blobs identificados para encontrar moedas de cobre,
+ * comparando o seu diâmetro com os valores de referência. Incorpora mecanismos
+ * para lidar com moedas parcialmente visíveis nas bordas da imagem.
+ *
+ * @param blob Ponteiro para o blob atual em análise
+ * @param copperBlobs Array de blobs candidatos a moedas de cobre
+ * @param ncopperBlobs Número de blobs candidatos a moedas de cobre
+ * @param excludeList Lista de moedas já excluídas da análise
+ * @param counters Array de contadores para cada tipo de moeda
+ * @param distThresholdSq Limiar de distância ao quadrado para associação entre blobs
+ * @return true se uma moeda de cobre for identificada, false caso contrário
+ */
+bool detectCopperCoins(OVC *blob, OVC *copperBlobs, int ncopperBlobs, 
+                     int *excludeList, int *counters, int distThresholdSq) {
     if (!blob || !copperBlobs || ncopperBlobs <= 0)
         return false;
     
@@ -67,108 +57,108 @@ bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs,
     const int frameHeight = 480;
     const int EDGE_MARGIN = 80;
     
-    // Precompute diameter ranges for efficient comparison
     const float MIN_VALID_AREA = 6000;
     const float MIN_VALID_CIRCULARITY = 0.70f;
     
     for (int i = 0; i < ncopperBlobs; i++) {
-        // Skip invalid blobs quickly
+        // Ignora blobs inválidos
         if (copperBlobs[i].label == 0 || copperBlobs[i].area < MIN_VALID_AREA)
             continue;
             
-        // Check distance with fewer operations
+        // Verifica a distância entre os centros dos blobs
         const int dx = copperBlobs[i].xc - blob->xc;
         const int dy = copperBlobs[i].yc - blob->yc;
         const int distSq = dx*dx + dy*dy;
         
         if (distSq <= distThresholdSq) {
-            const float diameter = CalculateCircularDiameter(&copperBlobs[i]);
-            const float circularity = CalculateCircularity(&copperBlobs[i]);
+            const float diameter = getDiameter(&copperBlobs[i]);
+            const float circularity = getCircularity(&copperBlobs[i]);
             
-            // Skip non-circular objects
+            // Ignora objetos com baixa circularidade
             if (circularity < MIN_VALID_CIRCULARITY)
                 continue;
             
             const int correctedYC = copperBlobs[i].yc + (int)(diameter * 0.05f);
-            const float tolerance = CalculateAdaptiveTolerance(copperBlobs[i].xc, 
-                                                        copperBlobs[i].yc, 
-                                                        frameWidth, frameHeight);
+            const float tolerance = adaptTolerance(copperBlobs[i].xc, 
+                                              copperBlobs[i].yc, 
+                                              frameWidth, frameHeight);
             
-            // Check if near edge
+            // Verifica se a moeda está próxima à borda da imagem
             const bool isNearEdge = (copperBlobs[i].xc < EDGE_MARGIN || 
                                    copperBlobs[i].yc < EDGE_MARGIN || 
                                    copperBlobs[i].xc > frameWidth - EDGE_MARGIN || 
                                    copperBlobs[i].yc > frameHeight - EDGE_MARGIN);
             
             if (isNearEdge) {
-                // Get last coin type at this location
-                const int coinType = GetLastCoinTypeAtLocation(copperBlobs[i].xc, copperBlobs[i].yc);
+                // Obtém o último tipo de moeda nesta localização
+                const int coinType = getCoinTypeAtLocation(copperBlobs[i].xc, copperBlobs[i].yc);
                 
                 if (coinType >= 1 && coinType <= 3) {
-                    // Skip counting if already detected
-                    if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, coinType, 1))
+                    // Evita contagem duplicada se a moeda já foi detetada
+                    if (!trackCoin(copperBlobs[i].xc, copperBlobs[i].yc, coinType, 1))
                         counters[coinType - 1]++;
                         
-                    ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
+                    excludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                     return true;
                 }
                 
-                // Calculate best match once
-                const float size1Ratio = diameter / D_1CENT;
-                const float size2Ratio = diameter / D_2CENT; 
-                const float size5Ratio = diameter / D_5CENT;
+                // Calcula a melhor correspondência com base na razão de tamanho
+                const float size1Ratio = diameter / DIAM_1CENT;
+                const float size2Ratio = diameter / DIAM_2CENT; 
+                const float size5Ratio = diameter / DIAM_5CENT;
                 
                 const float diff1 = fabsf(size1Ratio - 1.0f);
                 const float diff2 = fabsf(size2Ratio - 1.0f);
                 const float diff5 = fabsf(size5Ratio - 1.0f);
                 
+                // Determina o tipo de moeda mais provável
                 int bestType = (diff1 < diff2 && diff1 < diff5) ? 0 : 
                               (diff2 < diff1 && diff2 < diff5) ? 1 : 2;
                 
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, bestType + 1, 1))
+                if (!trackCoin(copperBlobs[i].xc, copperBlobs[i].yc, bestType + 1, 1))
                     counters[bestType]++;
                     
-                ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
+                excludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
             }
             
-            // Use precomputed ranges for faster comparison
-            const float d1Lower = D_1CENT * (1.0f - tolerance);
-            const float d1Upper = D_1CENT * (1.0f + tolerance);
-            const float d2Lower = D_2CENT * (1.0f - tolerance);
-            const float d2Upper = D_2CENT * (1.0f + tolerance);
-            const float d5Lower = D_5CENT * (1.0f - tolerance);
-            const float d5Upper = D_5CENT * (1.0f + tolerance);
+            // Calcula os intervalos de comparação para cada tipo de moeda
+            const float d1Lower = DIAM_1CENT * (1.0f - tolerance);
+            const float d1Upper = DIAM_1CENT * (1.0f + tolerance);
+            const float d2Lower = DIAM_2CENT * (1.0f - tolerance);
+            const float d2Upper = DIAM_2CENT * (1.0f + tolerance);
+            const float d5Lower = DIAM_5CENT * (1.0f - tolerance);
+            const float d5Upper = DIAM_5CENT * (1.0f + tolerance);
             
-            // Optimized conditions with simpler logic
+            // Verifica correspondência para cada tipo de moeda de cobre
             if (diameter >= d1Lower && diameter <= d1Upper) {
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 1, 1)) {
+                if (!trackCoin(copperBlobs[i].xc, copperBlobs[i].yc, 1, 1)) {
                     counters[0]++;
-                    printf("[COIN DETECTED] 1 cent | Value: 0.01€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                    printf("[MOEDA] 1 cêntimo | €0.01 | Diâm: %.1f | Área: %d | Circularidade: %.2f\n",
                           diameter, copperBlobs[i].area, circularity);
                 }
                 
-                ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
+                excludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
             }
             else if (diameter >= d2Lower && diameter <= d2Upper) {
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 2, 1)) {
+                if (!trackCoin(copperBlobs[i].xc, copperBlobs[i].yc, 2, 1)) {
                     counters[1]++;
-                    printf("[COIN DETECTED] 2 cents | Value: 0.02€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                    printf("[MOEDA] 2 cêntimos | €0.02 | Diâm: %.1f | Área: %d | Circularidade: %.2f\n",
                           diameter, copperBlobs[i].area, circularity);
                 }
                 
-                ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
+                excludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
             }
             else if (diameter >= d5Lower && diameter <= d5Upper) {
-                if (!IsCoinAlreadyDetected(copperBlobs[i].xc, copperBlobs[i].yc, 3, 1)) {
+                if (!trackCoin(copperBlobs[i].xc, copperBlobs[i].yc, 3, 1)) {
                     counters[2]++;
-                    printf("[COIN DETECTED] 5 cents | Value: 0.05€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                    printf("[MOEDA] 5 cêntimos | €0.05 | Diâm: %.1f | Área: %d | Circularidade: %.2f\n",
                           diameter, copperBlobs[i].area, circularity);
                 }
                 
-                ExcludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
+                excludeCoin(excludeList, copperBlobs[i].xc, correctedYC, 0);
                 return true;
             }
         }
@@ -177,118 +167,132 @@ bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs,
     return false;
 }
 
-// Complete implementation for DetectGoldCoinsImproved
-bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
-                           int *excludeList, int *counters, int distThresholdSq) {
+/**
+ * @brief Deteta moedas douradas (10, 20, 50 cêntimos)
+ *
+ * Esta função processa blobs para identificar moedas douradas, classificando-as
+ * com base no seu diâmetro. Utiliza limiares específicos para moedas douradas e
+ * implementa estratégias para lidar com moedas próximas às bordas da imagem.
+ * 
+ * @param blob Ponteiro para o blob atual em análise
+ * @param goldBlobs Array de blobs candidatos a moedas douradas
+ * @param ngoldBlobs Número de blobs candidatos a moedas douradas
+ * @param excludeList Lista de moedas já excluídas da análise
+ * @param counters Array de contadores para cada tipo de moeda
+ * @param distThresholdSq Limiar de distância ao quadrado para associação entre blobs
+ * @return true se uma moeda dourada for identificada, false caso contrário
+ */
+bool detectGoldCoins(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
+                   int *excludeList, int *counters, int distThresholdSq) {
     if (!blob || !goldBlobs || ngoldBlobs <= 0)
         return false;
     
     const int frameWidth = 640;
     const int frameHeight = 480;
-    const int EDGE_MARGIN = 90; // Gold coins have larger edge margin
+    const int EDGE_MARGIN = 90; // Margem maior para moedas douradas
     
-    // Precompute diameter ranges for efficient comparison
+    // Pré-calcula intervalos de diâmetro para comparação eficiente
     const float MIN_VALID_AREA = 6000;
-    const float MIN_VALID_CIRCULARITY = 0.75f; // Higher circularity for gold
+    const float MIN_VALID_CIRCULARITY = 0.75f; // Circularidade maior para moedas douradas
     
     for (int i = 0; i < ngoldBlobs; i++) {
-        // Skip invalid blobs quickly
+        // Ignora blobs inválidos rapidamente
         if (goldBlobs[i].label == 0 || goldBlobs[i].area < MIN_VALID_AREA)
             continue;
             
-        // Check distance with fewer operations
+        // Verifica distância com menos operações
         const int dx = goldBlobs[i].xc - blob->xc;
         const int dy = goldBlobs[i].yc - blob->yc;
         const int distSq = dx*dx + dy*dy;
         
         if (distSq <= distThresholdSq) {
-            const float diameter = CalculateCircularDiameter(&goldBlobs[i]);
-            const float circularity = CalculateCircularity(&goldBlobs[i]);
+            const float diameter = getDiameter(&goldBlobs[i]);
+            const float circularity = getCircularity(&goldBlobs[i]);
             
-            // Skip non-circular objects
+            // Ignora objetos não circulares
             if (circularity < MIN_VALID_CIRCULARITY)
                 continue;
             
-            const float tolerance = CalculateAdaptiveTolerance(goldBlobs[i].xc, 
-                                                        goldBlobs[i].yc, 
-                                                        frameWidth, frameHeight);
+            const float tolerance = adaptTolerance(goldBlobs[i].xc, 
+                                              goldBlobs[i].yc, 
+                                              frameWidth, frameHeight);
             
-            // Check if near edge
+            // Verifica se a moeda está próxima à borda da imagem
             const bool isNearEdge = (goldBlobs[i].xc < EDGE_MARGIN || 
                                    goldBlobs[i].yc < EDGE_MARGIN || 
                                    goldBlobs[i].xc > frameWidth - EDGE_MARGIN || 
                                    goldBlobs[i].yc > frameHeight - EDGE_MARGIN);
             
             if (isNearEdge) {
-                // Get last coin type at this location
-                const int coinType = GetLastCoinTypeAtLocation(goldBlobs[i].xc, goldBlobs[i].yc);
+                // Obtém o último tipo de moeda nesta localização
+                const int coinType = getCoinTypeAtLocation(goldBlobs[i].xc, goldBlobs[i].yc);
                 
                 if (coinType >= 4 && coinType <= 6) {
-                    // Skip counting if already detected
-                    if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, coinType, 1))
+                    // Evita contagem duplicada se a moeda já foi detetada
+                    if (!trackCoin(goldBlobs[i].xc, goldBlobs[i].yc, coinType, 1))
                         counters[coinType - 1]++;
                         
-                    ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                    excludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
                     return true;
                 }
                 
-                // Calculate best match
-                const float size10Ratio = diameter / D_10CENT;
-                const float size20Ratio = diameter / D_20CENT; 
-                const float size50Ratio = diameter / D_50CENT;
+                // Calcula a melhor correspondência com base na razão de tamanho
+                const float size10Ratio = diameter / DIAM_10CENT;
+                const float size20Ratio = diameter / DIAM_20CENT; 
+                const float size50Ratio = diameter / DIAM_50CENT;
                 
                 const float diff10 = fabsf(size10Ratio - 1.0f);
                 const float diff20 = fabsf(size20Ratio - 1.0f);
                 const float diff50 = fabsf(size50Ratio - 1.0f);
                 
-                // Index offset for gold coins (3 = 10c, 4 = 20c, 5 = 50c)
+                // Índice com offset para moedas douradas (3 = 10c, 4 = 20c, 5 = 50c)
                 int bestType = (diff10 < diff20 && diff10 < diff50) ? 3 : 
                               (diff20 < diff10 && diff20 < diff50) ? 4 : 5;
                 
-                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, bestType + 1, 1))
+                if (!trackCoin(goldBlobs[i].xc, goldBlobs[i].yc, bestType + 1, 1))
                     counters[bestType]++;
                     
-                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                excludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
                 return true;
             }
             
-            // Use precomputed ranges for faster comparison
-            const float d10Lower = D_10CENT * (1.0f - tolerance);
-            const float d10Upper = D_10CENT * (1.0f + tolerance);
-            const float d20Lower = D_20CENT * (1.0f - tolerance);
-            const float d20Upper = D_20CENT * (1.0f + tolerance);
-            const float d50Lower = D_50CENT * (1.0f - tolerance);
-            const float d50Upper = D_50CENT * (1.0f + tolerance);
+            // Utiliza intervalos pré-calculados para comparação rápida
+            const float d10Lower = DIAM_10CENT * (1.0f - tolerance);
+            const float d10Upper = DIAM_10CENT * (1.0f + tolerance);
+            const float d20Lower = DIAM_20CENT * (1.0f - tolerance);
+            const float d20Upper = DIAM_20CENT * (1.0f + tolerance);
+            const float d50Lower = DIAM_50CENT * (1.0f - tolerance);
+            const float d50Upper = DIAM_50CENT * (1.0f + tolerance);
             
-            // Optimized conditions with simpler logic
+            // Condições otimizadas com lógica mais simples
             if (diameter >= d10Lower && diameter <= d10Upper) {
-                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, 4, 1)) {
+                if (!trackCoin(goldBlobs[i].xc, goldBlobs[i].yc, 4, 1)) {
                     counters[3]++;
-                    printf("[COIN DETECTED] 10 cents | Value: 0.10€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                    printf("[MOEDA] 10 cêntimos | €0.10 | Diâm: %.1f | Área: %d | Circularidade: %.2f\n",
                           diameter, goldBlobs[i].area, circularity);
                 }
                 
-                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                excludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
                 return true;
             }
             else if (diameter >= d20Lower && diameter <= d20Upper) {
-                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, 5, 1)) {
+                if (!trackCoin(goldBlobs[i].xc, goldBlobs[i].yc, 5, 1)) {
                     counters[4]++;
-                    printf("[COIN DETECTED] 20 cents | Value: 0.20€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                    printf("[MOEDA] 20 cêntimos | €0.20 | Diâm: %.1f | Área: %d | Circularidade: %.2f\n",
                           diameter, goldBlobs[i].area, circularity);
                 }
                 
-                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                excludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
                 return true;
             }
             else if (diameter >= d50Lower && diameter <= d50Upper) {
-                if (!IsCoinAlreadyDetected(goldBlobs[i].xc, goldBlobs[i].yc, 6, 1)) {
+                if (!trackCoin(goldBlobs[i].xc, goldBlobs[i].yc, 6, 1)) {
                     counters[5]++;
-                    printf("[COIN DETECTED] 50 cents | Value: 0.50€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                    printf("[MOEDA] 50 cêntimos | €0.50 | Diâm: %.1f | Área: %d | Circularidade: %.2f\n",
                           diameter, goldBlobs[i].area, circularity);
                 }
                 
-                ExcludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
+                excludeCoin(excludeList, goldBlobs[i].xc, goldBlobs[i].yc, 0);
                 return true;
             }
         }
@@ -297,44 +301,32 @@ bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs,
     return false;
 }
 
-// New utility function to reduce duplicated code
-void CorrectMisidentifiedGoldCoins(int x, int y, int *counters) {
-    const int distThresholdSq = 80*80;
-    
-    for (int i = 0; i < MAX_TRACKED_COINS; i++) {
-        if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) 
-            continue;
-            
-        const int dx = detectedCoins[i][0] - x;
-        const int dy = detectedCoins[i][1] - y;
-        const int distSq = dx*dx + dy*dy;
-        
-        if (distSq <= distThresholdSq && detectedCoins[i][2] >= 4 && detectedCoins[i][2] <= 6) {
-            const int goldType = detectedCoins[i][2];
-            const int goldCounterIdx = goldType - 1;
-            
-            // Decrease counter if necessary
-            if (counters[goldCounterIdx] > 0)
-                counters[goldCounterIdx]--;
-                
-            // Clear entry
-            memset(&detectedCoins[i][0], 0, 5 * sizeof(int));
-            break;
-        }
-    }
-}
-
-// Streamlined Euro coin detection with fewer debug prints
-bool DetectEuroCoinsImproved(OVC *blob, OVC *euroBlobs, int neuroBlobs, 
-                           int *excludeList, int *counters, int distThresholdSq) {
+/**
+ * @brief Deteta moedas de Euro (1, 2 euros)
+ *
+ * Esta função analisa blobs para identificar moedas de Euro, que são bicolores
+ * e maiores. Utiliza um algoritmo de dois passos: primeiro procura moedas completas
+ * com boa circularidade, depois procura moedas parciais que podem estar parcialmente
+ * visíveis na imagem.
+ * 
+ * @param blob Ponteiro para o blob atual em análise
+ * @param euroBlobs Array de blobs candidatos a moedas de Euro
+ * @param neuroBlobs Número de blobs candidatos a moedas de Euro
+ * @param excludeList Lista de moedas já excluídas da análise
+ * @param counters Array de contadores para cada tipo de moeda
+ * @param distThresholdSq Limiar de distância ao quadrado para associação entre blobs
+ * @return true se uma moeda de Euro for identificada, false caso contrário
+ */
+bool detectEuroCoins(OVC *blob, OVC *euroBlobs, int neuroBlobs, 
+                   int *excludeList, int *counters, int distThresholdSq) {
     if (!blob || !euroBlobs || neuroBlobs <= 0)
         return false;
     
-    // Constants
+    // Constantes
     const int MAX_VALID_AREA = 100000;  
     const int MIN_VALID_AREA = 6000;
     
-    // Track best candidates
+    // Rastreia os melhores candidatos
     int bestCompleteIndex = -1;
     float bestCompleteDiameter = 0.0f;
     float bestCompleteCircularity = 0.0f;
@@ -343,16 +335,16 @@ bool DetectEuroCoinsImproved(OVC *blob, OVC *euroBlobs, int neuroBlobs,
     float bestPartialDiameter = 0.0f;
     int bestPartialArea = 0;
     
-    // Single-pass to find best candidates
+    // Passagem única para encontrar os melhores candidatos
     for (int i = 0; i < neuroBlobs; i++) {
-        // Quick area check
+        // Verificação rápida de área
         if (euroBlobs[i].area < MIN_VALID_AREA || euroBlobs[i].area > MAX_VALID_AREA)
             continue;
 
-        const float diameter = CalculateCircularDiameter(&euroBlobs[i]);
-        const float circularity = CalculateCircularity(&euroBlobs[i]);
+        const float diameter = getDiameter(&euroBlobs[i]);
+        const float circularity = getCircularity(&euroBlobs[i]);
         
-        // Complete Euro coins
+        // Moedas de Euro completas
         if (diameter >= 175.0f && diameter <= 210.0f && circularity > 0.75f) {
             if (bestCompleteIndex == -1 || circularity > bestCompleteCircularity) {
                 bestCompleteIndex = i;
@@ -360,7 +352,7 @@ bool DetectEuroCoinsImproved(OVC *blob, OVC *euroBlobs, int neuroBlobs,
                 bestCompleteCircularity = circularity;
             }
         }
-        // Partial Euro coins
+        // Moedas de Euro parciais
         else if (circularity > 0.65f && euroBlobs[i].width >= 130 && euroBlobs[i].height >= 130) {
             if (bestPartialIndex == -1 || euroBlobs[i].area > bestPartialArea) {
                 bestPartialIndex = i;
@@ -370,65 +362,66 @@ bool DetectEuroCoinsImproved(OVC *blob, OVC *euroBlobs, int neuroBlobs,
         }
     }
     
-    // Process complete Euro coin first
+    // Processa primeiro a moeda de Euro completa
     if (bestCompleteIndex >= 0) {
-        // Determine Euro type
+        // Determina o tipo de Euro
         const bool is2Euro = (bestCompleteDiameter >= 185.0f);
         const int coinType = is2Euro ? 8 : 7;
         const int counterIdx = is2Euro ? 7 : 6;
         
-        // Correct any misidentified gold coins
-        CorrectMisidentifiedGoldCoins(euroBlobs[bestCompleteIndex].xc, 
-                                      euroBlobs[bestCompleteIndex].yc, 
-                                      counters);
+        // Corrige moedas douradas identificadas incorretamente
+        correctGoldCoins(euroBlobs[bestCompleteIndex].xc, 
+                        euroBlobs[bestCompleteIndex].yc, 
+                        counters);
         
-        // Count if not already counted
-        if (!IsCoinAlreadyDetected(euroBlobs[bestCompleteIndex].xc, 
-                                euroBlobs[bestCompleteIndex].yc, 
-                                coinType, 1)) {
+        // Contabiliza se ainda não foi contada
+        if (!trackCoin(euroBlobs[bestCompleteIndex].xc, 
+                     euroBlobs[bestCompleteIndex].yc, 
+                     coinType, 1)) {
             counters[counterIdx]++;
             
-            // Log detailed coin information
+            // Regista informações detalhadas da moeda
             const float diameter = bestCompleteDiameter;
             const float circularity = bestCompleteCircularity;
             const int area = euroBlobs[bestCompleteIndex].area;
             
             if (is2Euro) {
-                printf("[COIN DETECTED] 2 Euros | Value: 2.00€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                printf("[MOEDA] 2 Euros | €2.00 | Diâm: %.1f | Área: %d | Circ: %.2f\n",
                       diameter, area, circularity);
             } else {
-                printf("[COIN DETECTED] 1 Euro | Value: 1.00€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
+                printf("[MOEDA] 1 Euro | €1.00 | Diâm: %.1f | Área: %d | Circ: %.2f\n",
                       diameter, area, circularity);
             }
         }
         
-        ExcludeCoin(excludeList, euroBlobs[bestCompleteIndex].xc, 
+        excludeCoin(excludeList, euroBlobs[bestCompleteIndex].xc, 
                   euroBlobs[bestCompleteIndex].yc, 0);
         return true;
     }
     
-    // Process partial Euro coin if significant
+    // Processa moeda de Euro parcial se for significativa
     else if (bestPartialIndex >= 0 && bestPartialArea >= 14000) {
-        const int coinType = 8;  // Always 2€ for video
+        const int coinType = 8;  
         const int counterIdx = 7;
         
-        // Correct any misidentified gold coins
-        CorrectMisidentifiedGoldCoins(euroBlobs[bestPartialIndex].xc, 
-                                     euroBlobs[bestPartialIndex].yc, 
-                                     counters);
+        // Corrige moedas douradas identificadas incorretamente
+        correctGoldCoins(euroBlobs[bestPartialIndex].xc, 
+                       euroBlobs[bestPartialIndex].yc, 
+                       counters);
         
-        // Count if not already counted
-        if (!IsCoinAlreadyDetected(euroBlobs[bestPartialIndex].xc, 
-                                euroBlobs[bestPartialIndex].yc, 
-                                coinType, 1)) {
+        // Contabiliza se ainda não foi contada
+        if (!trackCoin(euroBlobs[bestPartialIndex].xc, 
+                     euroBlobs[bestPartialIndex].yc, 
+                     coinType, 1)) {
             counters[counterIdx]++;
             
-            // Log detailed coin information
-            printf("[COIN DETECTED] 2 Euros (partial) | Value: 2.00€ | Diameter: %.1f | Area: %d | Circularity: %.2f\n",
-                  bestPartialDiameter, bestPartialArea, CalculateCircularity(&euroBlobs[bestPartialIndex]));
+            // Regista informações detalhadas da moeda
+            printf("[MOEDA] 2 Euros (parcial) | €2.00 | Diâm: %.1f | Área: %d | Circ: %.2f\n",
+                  bestPartialDiameter, bestPartialArea, 
+                  getCircularity(&euroBlobs[bestPartialIndex]));
         }
         
-        ExcludeCoin(excludeList, euroBlobs[bestPartialIndex].xc, 
+        excludeCoin(excludeList, euroBlobs[bestPartialIndex].xc, 
                   euroBlobs[bestPartialIndex].yc, 0);
         return true;
     }

@@ -8,14 +8,12 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_analysis_functions.cpp" "lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_analysis_functions.cpp.o.d"
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_binary_functions.cpp" "lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_binary_functions.cpp.o.d"
+  "/home/flavio/Downloads/TrabalhoVC/lib/vc_blob.cpp" "lib/CMakeFiles/vclib.dir/vc_blob.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_blob.cpp.o.d"
+  "/home/flavio/Downloads/TrabalhoVC/lib/vc_coin.cpp" "lib/CMakeFiles/vclib.dir/vc_coin.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_coin.cpp.o.d"
   "/home/flavio/Downloads/TrabalhoVC/lib/vc_coin_detection.cpp" "lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_coin_detection.cpp.o.d"
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_coin_functions.cpp" "lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_coin_functions.cpp.o.d"
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_coin_utils.cpp" "lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_coin_utils.cpp.o.d"
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_conversion_functions.cpp" "lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_conversion_functions.cpp.o.d"
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_core_functions.cpp" "lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_core_functions.cpp.o.d"
-  "/home/flavio/Downloads/TrabalhoVC/lib/vc_filter_functions.cpp" "lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_filter_functions.cpp.o.d"
+  "/home/flavio/Downloads/TrabalhoVC/lib/vc_core.cpp" "lib/CMakeFiles/vclib.dir/vc_core.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_core.cpp.o.d"
+  "/home/flavio/Downloads/TrabalhoVC/lib/vc_frame_processor.cpp" "lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_frame_processor.cpp.o.d"
+  "/home/flavio/Downloads/TrabalhoVC/lib/vc_utils.cpp" "lib/CMakeFiles/vclib.dir/vc_utils.cpp.o" "gcc" "lib/CMakeFiles/vclib.dir/vc_utils.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

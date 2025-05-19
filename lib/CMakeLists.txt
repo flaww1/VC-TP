@@ -1,13 +1,11 @@
 # Adiciona a biblioteca com todos os ficheiros fonte necessários
 add_library(vclib 
-    vc_core_functions.cpp               # Funções básicas de manipulação de imagens
-    vc_conversion_functions.cpp         # Funções de conversão entre espaços de cor
-    vc_binary_functions.cpp             # Funções para processamento de imagens binárias
-    vc_filter_functions.cpp             # Funções de filtragem de imagens
-    vc_analysis_functions.cpp           # Funções para análise de imagens
-    vc_coin_functions.cpp               # Funções principais para moedas
-    vc_coin_utils.cpp                   # Funções utilitárias para moedas
-    vc_coin_detection.cpp               # Funções para detecção de moedas
+    vc_blob.cpp
+    vc_coin.cpp
+    vc_core.cpp
+    vc_utils.cpp
+    vc_coin_detection.cpp
+    vc_frame_processor.cpp
 )
 
 # Procura e configura o OpenCV

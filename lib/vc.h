@@ -8,23 +8,27 @@
 
 /**
  * @file vc.h
- * @brief Biblioteca de funções para processamento de imagem e visão computacional.
+ * @brief Biblioteca de funções para processamento de imagem e visão por computador.
  *
- * Este ficheiro contém as definições de estruturas e protótipos de funções
- * para processamento de imagem e visão computacional implementadas na cadeira
- * de Visão por Computador.
+ * Este ficheiro contém declarações para todas as funções e estruturas de dados
+ * utilizadas no projeto de deteção e classificação de moedas através de visão
+ * por computador.
  *
- * @author Grupo 7 ( Daniel - 26432 / Maria - 26438 / Bruno - 26014 / Flávio - 21110)
+ * @author 
+ * Grupo 7 ( Daniel - 26432 / Maria - 26438 / Bruno - 26014 / Flávio - 21110)
  */
 
+#ifndef VC_H
+#define VC_H
+
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
+// Bandeira de depuração
 #define VC_DEBUG
 
-// Define o número máximo de moedas que podem ser detectadas
+// Número máximo de moedas a rastrear
 #define MAX_COINS 50
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -33,418 +37,168 @@ extern "C"
 
 /**
  * @brief Retorna o valor máximo entre dois valores
+ * 
+ * Esta macro compara dois valores e retorna o maior dos dois.
  */
 #define VC_MAX(a, b) (a > b ? a : b)
 
 /**
  * @brief Retorna o valor mínimo entre dois valores
+ * 
+ * Esta macro compara dois valores e retorna o menor dos dois.
  */
 #define VC_MIN(a, b) (a < b ? a : b)
 
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	//                   ESTRUTURA DE UMA IMAGEM
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                   ESTRUTURAS DE DADOS
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	/**
-	 * @brief Estrutura para armazenar uma imagem
-	 */
-	typedef struct
-	{
-		unsigned char *data; /**< Ponteiro para os dados da imagem */
-		int width, height;	 /**< Largura e altura da imagem */
-		int channels;		 /**< Número de canais: Binário/Cinzentos=1; RGB=3 */
-		int levels;			 /**< Níveis: Binário=1; Cinzentos [1,255]; RGB [1,255] */
-		int bytesperline;	 /**< Bytes por linha = width * channels */
-	} IVC;
+/**
+ * @brief Estrutura para armazenar uma imagem
+ * 
+ * Esta estrutura contém todos os dados necessários para representar
+ * uma imagem, incluindo dimensões, número de canais e ponteiro para os dados.
+ */
+typedef struct {
+    unsigned char *data;     /**< Ponteiro para os dados da imagem */
+    int width, height;       /**< Dimensões da imagem (largura e altura) */
+    int channels;            /**< Número de canais: Binário/Cinza=1; RGB=3 */
+    int levels;              /**< Níveis: Binário=1; Cinza/RGB [1,255] */
+    int bytesperline;        /**< Bytes por linha = largura * canais */
+} IVC;
 
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	//                   ESTRUTURA DE UM BLOB (OBJETO)
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * @brief Estrutura para armazenar informações sobre um blob (objeto) numa imagem
+ * 
+ * Esta estrutura armazena informações sobre objetos detetados na imagem,
+ * como posição, dimensões, área, centro de massa e perímetro.
+ */
+typedef struct {
+    int x, y, width, height; /**< Caixa delimitadora (bounding box) */
+    int area;                /**< Área do objeto em pixels */
+    int xc, yc;              /**< Centro de massa (centróide) */
+    int perimeter;           /**< Perímetro do objeto em pixels */
+    int label;               /**< Etiqueta do objeto */
+} OVC;
 
-	/**
-	 * @brief Estrutura para armazenar informação sobre um blob (objeto) numa imagem
-	 */
-	typedef struct
-	{
-		int x, y, width, height; /**< Caixa Delimitadora (Bounding Box) */
-		int area;				 /**< Área */
-		int xc, yc;				 /**< Centro-de-massa */
-		int perimeter;			 /**< Perímetro */
-		int label;				 /**< Etiqueta */
-	} OVC;
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                    FUNÇÕES PRINCIPAIS
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	//                    PROTÓTIPOS DE FUNÇÕES
-	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Manipulação de imagens
+/**
+ * @brief Cria uma nova imagem com as dimensões e características especificadas
+ * @param width Largura da imagem em pixels
+ * @param height Altura da imagem em pixels
+ * @param channels Número de canais (1 para cinza, 3 para RGB)
+ * @param levels Número de níveis de intensidade (255 para normal, 1 para binário)
+ * @return Ponteiro para a imagem criada ou NULL em caso de erro
+ */
+IVC *createImage(int width, int height, int channels, int levels);
 
-	/**
-	 * @brief Alocar memória para uma nova imagem
-	 * @param width Largura da imagem
-	 * @param height Altura da imagem
-	 * @param channels Número de canais
-	 * @param levels Níveis de cinzento
-	 * @return Ponteiro para a estrutura IVC criada ou NULL em caso de erro
-	 */
-	IVC *vc_image_new(int width, int height, int channels, int levels);
+/**
+ * @brief Liberta a memória alocada para uma imagem
+ * @param image Ponteiro para a imagem a ser libertada
+ * @return NULL após a libertação bem-sucedida
+ */
+IVC *freeImage(IVC *image);
 
-	/**
-	 * @brief Libertar memória de uma imagem
-	 * @param image Ponteiro para a imagem a libertar
-	 * @return NULL em caso de sucesso
-	 */
-	IVC *vc_image_free(IVC *image);
+/**
+ * @brief Lê uma imagem de um ficheiro
+ * @param filename Caminho do ficheiro a ser lido
+ * @return Ponteiro para a imagem carregada ou NULL em caso de erro
+ */
+IVC *readImage(char *filename);
 
-	/**
-	 * @brief Ler uma imagem de ficheiro (PBM, PGM ou PPM)
-	 * @param filename Caminho para o ficheiro
-	 * @return Ponteiro para a estrutura IVC criada ou NULL em caso de erro
-	 */
-	IVC *vc_read_image(char *filename);
+/**
+ * @brief Guarda uma imagem num ficheiro
+ * @param filename Caminho onde guardar a imagem
+ * @param image Imagem a ser guardada
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int writeImage(char *filename, IVC *image);
 
-	/**
-	 * @brief Gravar uma imagem em ficheiro (PBM, PGM ou PPM)
-	 * @param filename Caminho para o ficheiro
-	 * @param image Ponteiro para a imagem a gravar
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_write_image(char *filename, IVC *image);
+// Conversões de cores
+/**
+ * @brief Converte uma imagem do formato BGR para RGB
+ * @param src Imagem de origem no formato BGR
+ * @param dst Imagem de destino no formato RGB
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int bgr2rgb(IVC *src, IVC *dst);
 
-	/**
-	 * @brief Aplica negativo a uma imagem de nível de cinzento
-	 * @param srcdst Imagem de origem e destino
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_gray_negative(IVC *srcdst);
+/**
+ * @brief Converte uma imagem RGB para escala de cinzento
+ * @param src Imagem de origem no formato RGB
+ * @param dst Imagem de destino em escala de cinzento
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int rgb2gray(IVC *src, IVC *dst);
 
-	/**
-	 * @brief Aplica negativo a uma imagem RGB
-	 * @param srcdst Imagem de origem e destino
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_rgb_negative(IVC *srcdst);
+/**
+ * @brief Converte uma imagem RGB para o espaço de cores HSV e segmenta com base no tipo
+ * @param srcdst Imagem a ser convertida e segmentada (altera a original)
+ * @param segmentType Tipo de segmentação: 0=moedas douradas, 1=moedas cobre, 2=moedas euro
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int rgb2hsv(IVC *srcdst, int segmentType);
 
-	/**
-	 * @brief Converte uma imagem RGB para nível de cinzento
-	 * @param src Imagem de origem (RGB)
-	 * @param dst Imagem de destino (nível de cinzento)
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_rgb_to_gray(IVC *src, IVC *dst);
+// Operações binárias
+/**
+ * @brief Converte uma imagem em escala de cinzento para binária usando um limiar
+ * @param src Imagem de origem em escala de cinzento
+ * @param dst Imagem de destino binária
+ * @param threshold Valor limiar para a conversão (0-255)
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int gray2binary(IVC *src, IVC *dst, int threshold);
 
-	/**
-	 * @brief Converte uma imagem RGB para HSV
-	 * @param srcdst Imagem de origem e destino
-	 * @param tipo Tipo de conversão
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_rgb_to_hsv(IVC *srcdst, int tipo);
+/**
+ * @brief Aplica a operação morfológica de abertura (erosão seguida de dilatação)
+ * @param src Imagem de origem binária
+ * @param dst Imagem de destino binária
+ * @param kernel Tamanho do kernel (matriz estruturante)
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int binaryOpen(IVC *src, IVC *dst, int kernel);
 
-	/**
-	 * @brief Converte uma imagem BGR para RGB
-	 * @param src Imagem de origem (BGR)
-	 * @param dst Imagem de destino (RGB)
-	 * @return 0
-	 */
-	int vc_bgr_to_rgb(IVC *src, IVC *dst);
+/**
+ * @brief Aplica a operação morfológica de fechamento (dilatação seguida de erosão)
+ * @param src Imagem de origem binária
+ * @param dst Imagem de destino binária
+ * @param kernel Tamanho do kernel (matriz estruturante)
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int binaryClose(IVC *src, IVC *dst, int kernel);
 
-	/**
-	 * @brief Aplica uma escala de cores de cinzento para RGB
-	 * @param src Imagem de origem (nível de cinzento)
-	 * @param dst Imagem de destino (RGB)
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_scale_gray_to_rgb(IVC *src, IVC *dst);
+// Deteção de bordas
+/**
+ * @brief Deteta bordas numa imagem em escala de cinzento
+ * @param src Imagem de origem em escala de cinzento
+ * @param dst Imagem de destino com as bordas detetadas
+ * @param threshold Limiar para determinar o que é considerado uma borda
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int detectEdges(IVC *src, IVC *dst, float threshold);
 
-	/**
-	 * @brief Binariza uma imagem em nível de cinzento
-	 * @param src Imagem de origem (nível de cinzento)
-	 * @param dst Imagem de destino (binária)
-	 * @param threshold Valor de limiar para binarização
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_gray_to_binary(IVC *src, IVC *dst, int threshold);
+// Análise de blobs
+/**
+ * @brief Etiqueta objetos (blobs) numa imagem binária
+ * @param src Imagem de origem binária
+ * @param dst Imagem de destino onde cada objeto terá uma etiqueta única
+ * @param nlabels Ponteiro para armazenar o número de objetos encontrados
+ * @return Array de estruturas OVC com as informações dos objetos detetados
+ */
+OVC *blobLabel(IVC *src, IVC *dst, int *nlabels);
 
-	/**
-	 * @brief Binariza uma imagem em nível de cinzento usando a média global como limiar
-	 * @param src Imagem de origem (nível de cinzento)
-	 * @param dst Imagem de destino (binária)
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_gray_to_binary_global_mean(IVC *src, IVC *dst);
+/**
+ * @brief Calcula propriedades dos objetos etiquetados
+ * @param src Imagem com os objetos etiquetados
+ * @param blobs Array de estruturas OVC para armazenar as informações
+ * @param nblobs Número de objetos a processar
+ * @return 1 em caso de sucesso, 0 em caso de erro
+ */
+int blobInfo(IVC *src, OVC *blobs, int nblobs);
 
-	/**
-	 * @brief Binariza uma imagem em nível de cinzento usando o midpoint de uma vizinhança
-	 * @param src Imagem de origem (nível de cinzento)
-	 * @param dst Imagem de destino (binária)
-	 * @param kernel Tamanho do kernel para calcular o midpoint
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_gray_to_binary_midpoint(IVC *src, IVC *dst, int kernel);
-
-	/**
-	 * @brief Aplica operação de dilatação em imagem binária
-	 * @param src Imagem de origem (binária)
-	 * @param dst Imagem de destino (binária)
-	 * @param kernel Tamanho do kernel de dilatação
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_binary_dilate(IVC *src, IVC *dst, int kernel);
-
-	/**
-	 * @brief Aplica operação de erosão em imagem binária
-	 * @param src Imagem de origem (binária)
-	 * @param dst Imagem de destino (binária)
-	 * @param kernel Tamanho do kernel de erosão
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_binary_erode(IVC *src, IVC *dst, int kernel);
-
-	/**
-	 * @brief Aplica operação de abertura em imagem binária (erosão seguida de dilatação)
-	 * @param src Imagem de origem (binária)
-	 * @param dst Imagem de destino (binária)
-	 * @param kernel Tamanho do kernel
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_binary_open(IVC *src, IVC *dst, int kernel);
-
-	/**
-	 * @brief Aplica operação de fecho em imagem binária (dilatação seguida de erosão)
-	 * @param src Imagem de origem (binária)
-	 * @param dst Imagem de destino (binária)
-	 * @param kernel Tamanho do kernel
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_binary_close(IVC *src, IVC *dst, int kernel);
-
-	/**
-	 * @brief Realiza a etiquetagem de objetos/blobs em imagem binária
-	 * @param src Imagem de origem (binária)
-	 * @param dst Imagem de destino (etiquetada)
-	 * @param nlabels Ponteiro para armazenar o número de etiquetas encontradas
-	 * @return Array de estruturas OVC ou NULL em caso de erro
-	 */
-	OVC *vc_binary_blob_labelling(IVC *src, IVC *dst, int *nlabels);
-
-	/**
-	 * @brief Extrai informações sobre os blobs etiquetados
-	 * @param src Imagem de origem (etiquetada)
-	 * @param blobs Array de estruturas OVC
-	 * @param nblobs Número de blobs
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_binary_blob_info(IVC *src, OVC *blobs, int nblobs);
-
-	/**
-	 * @brief Deteta bordas usando operador de Prewitt
-	 * @param src Imagem de origem (nível de cinzento)
-	 * @param dst Imagem de destino (bordas)
-	 * @param th Limiar
-	 * @return 1 em caso de sucesso, 0 em caso de erro
-	 */
-	int vc_gray_edge_prewitt(IVC *src, IVC *dst, float th);
-
-	/**
-	 * @brief Gere a lista de moedas a excluir da contagem
-	 * @param excludeList Array para guardar coordenadas das moedas
-	 * @param xc Coordenada x do centro da moeda
-	 * @param yc Coordenada y do centro da moeda
-	 * @param option 0 para adicionar, 1 para remover
-	 * @return 0
-	 */
-	int ExcludeCoin(int *excludeList, int xc, int yc, int option);
-
-	/**
-	 * @brief Processa os frames do vídeo para detetar moedas
-	 * @param frame Frame atual
-	 * @param frame2 Frame seguinte
-	 * @param excludeList Array para guardar coordenadas de moedas a excluir
-	 * @param coinCounts Array para contar ocorrências de cada tipo de moeda
-	 */
-	void ProcessFrame(IVC *frame, IVC *frame2, int *excludeList, int *coinCounts);
-
-	/**
-	 * @brief Processa a imagem para detetar e classificar moedas
-	 * @param src Imagem original para análise
-	 * @param blobs Blobs da primeira segmentação
-	 * @param blobs2 Blobs da segunda segmentação (HSV tipo 0 - moedas douradas)
-	 * @param blobs3 Blobs da terceira segmentação (HSV tipo 1 - moedas de cobre)
-	 * @param blobs4 Blobs da quarta segmentação (HSV tipo 2 - moedas de Euro)
-	 * @param nlabels Número de blobs em blobs
-	 * @param nlabels2 Número de blobs em blobs2
-	 * @param nlabels3 Número de blobs em blobs3
-	 * @param nlabels4 Número de blobs em blobs4
-	 * @param excludeList Array para guardar coordenadas de moedas a excluir
-	 * @param coinCounts Array para contar ocorrências de cada tipo de moeda
-	 */
-	void ProcessImage(IVC *src, OVC *blobs, OVC *blobs2, OVC *blobs3, OVC *blobs4,
-	                int nlabels, int nlabels2, int nlabels3, int nlabels4,
-	                int *excludeList, int *coinCounts);
-
-	/**
-	 * @brief Verifica se um blob tem uma forma consistente de moeda
-	 * 
-	 * @param blob Estrutura OVC contendo informações do blob
-	 * @return true se o blob for uma moeda válida, false caso contrário
-	 */
-	bool IsValidCoinShape(OVC *blob);
-
-	/**
-	 * @brief Determina se as dimensões físicas de um blob correspondem a uma moeda específica
-	 *
-	 * @param blob Ponteiro para a estrutura do blob
-	 * @param targetDiameter O diâmetro esperado para este tipo de moeda
-	 * @param tolerance Porcentagem de desvio aceitável do alvo (ex.: 0.08 = 8%)
-	 * @return true se o blob corresponder às dimensões da moeda, false caso contrário
-	 */
-	bool MatchesCoinSize(OVC *blob, float targetDiameter, float tolerance);
-
-	/**
-	 * @brief Determina a circularidade de um blob para validação de moedas
-	 * 
-	 * @param blob Estrutura OVC contendo informações do blob
-	 * @return Valor de circularidade (1.0 = perfeitamente circular)
-	 */
-	float CalculateCircularity(OVC *blob);
-
-	/**
-	 * @brief Calcular diâmetro de um blob circular com base na área
-	 * @param blob Ponteiro para o blob a ser avaliado
-	 * @return Diâmetro estimado do blob
-	 */
-	float CalculateCircularDiameter(OVC *blob);
-
-	/**
-	 * @brief Filtra blobs de moedas douradas
-	 * @param blobs Array de blobs a filtrar
-	 * @param nlabels Número de blobs
-	 */
-	void FilterGoldCoinBlobs(OVC *blobs, int nlabels);
-
-	/**
-	 * @brief Filtra blobs de moedas de cobre
-	 * @param blobs Array de blobs a filtrar
-	 * @param nlabels Número de blobs
-	 */
-	void FilterCopperCoinBlobs(OVC *blobs, int nlabels);
-
-	/**
-	 * @brief Filtra blobs de moedas de Euro (1€ e 2€)
-	 * @param blobs Array de blobs a filtrar
-	 * @param nlabels Número de blobs
-	 */
-	void FilterEuroCoinBlobs(OVC *blobs, int nlabels);
-
-	/**
-	 * @brief Incrementa o contador de frames para rastreamento de moedas
-	 */
-	void IncrementFrameCounter();
-
-	/**
-	 * @brief Retorna o contador de frames atual (para debug/estatísticas)
-	 */
-	int GetFrameCounter();
-
-	/**
-	 * @brief Enhanced function to check if a coin was already detected and counted
-	 * @param x X coordinate of coin center
-	 * @param y Y coordinate of coin center
-	 * @param coinType Type of coin (1-8)
-	 * @param countIt Whether to mark this coin as counted (1) or just check (0)
-	 * @return 1 if already counted, 0 if new or not yet counted
-	 */
-	int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt);
-
-	/**
-	 * @brief Desenha visualizações de moedas com suporte para Euro coins
-	 * @param frame Frame onde desenhar
-	 * @param goldBlobs Blobs de moedas douradas
-	 * @param copperBlobs Blobs de moedas de cobre
-	 * @param euroBlobs Blobs de moedas de Euro
-	 * @param nGoldBlobs Número de blobs dourados
-	 * @param nCopperBlobs Número de blobs de cobre
-	 * @param nEuroBlobs Número de blobs de Euro
-	 */
-	void DrawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
-	              int nGoldBlobs, int nCopperBlobs, int nEuroBlobs);
-
-	/**
-	 * @brief Desenha caixas delimitadoras e centros de massa nas moedas detetadas
-	 * @param src Imagem onde desenhar as caixas
-	 * @param blobs Array de blobs
-	 * @param nBlobs Número de blobs
-	 * @param coinType Tipo de moeda (0: 1-5 cêntimos, 1: 10-2 euros)
-	 * @return 1 em caso de sucesso
-	 */
-	int DrawBoundingBoxes(IVC *src, OVC *blobs, int nBlobs, int coinType);
-
-	/**
-	 * @brief Gets the most recent coin type detected at a specific location
-	 * This helps maintain coin type consistency when coins are partially visible
-	 * @param x X coordinate
-	 * @param y Y coordinate
-	 * @return Coin type (1-8) or 0 if no coin was detected at that location
-	 */
-	int GetLastCoinTypeAtLocation(int x, int y);
-
-	/**
-	 * @brief Calculate adaptive tolerance based on coin position and frame edge proximity
-	 * 
-	 * @param xc X-coordinate of coin center
-	 * @param yc Y-coordinate of coin center
-	 * @param frameWidth Width of the frame
-	 * @param frameHeight Height of the frame
-	 * @return Adjusted tolerance value
-	 */
-	float CalculateAdaptiveTolerance(int xc, int yc, int frameWidth, int frameHeight);
-
-	/**
-	 * @brief Calibrate the pixel-to-mm conversion factor using a reference coin
-	 * 
-	 * @param referenceBlob Blob of a reference coin (any coin with known diameter)
-	 * @param referenceCoinType Type of the reference coin (1-6 for euro cents)
-	 * @return True if calibration successful, false otherwise
-	 */
-	bool CalibrateWithReferenceCoin(OVC *referenceBlob, int referenceCoinType);
-
-	/**
-	 * @brief Get expected pixel diameter based on coin type and current calibration
-	 * 
-	 * @param coinType Type of coin (1-6 for euro cents)
-	 * @return Expected diameter in pixels
-	 */
-	float GetExpectedDiameter(int coinType);
-
-	/**
-	 * @brief Improved copper coin detection with adaptive tolerance
-	 */
-	bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs, 
-                             int *excludeList, int *counters, int distThresholdSq);
-
-	/**
-	 * @brief Improved gold coin detection with adaptive tolerance and better edge handling
-	 */
-	bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
-                           int *excludeList, int *counters, int distThresholdSq);
-
-	/**
-	 * @brief Detect 1 Euro and 2 Euro coins with adaptive tolerance
-	 * 
-	 * @param blob Main blob to check
-	 * @param euroBlobs Array of potential Euro coin blobs
-	 * @param neuroBlobs Number of potential Euro blobs
-	 * @param excludeList Array to track excluded blobs
-	 * @param counters Array of coin counters (indices 6 and 7 for 1€ and 2€)
-	 * @param distThresholdSq Square of distance threshold for nearby detection
-	 * @return true if a Euro coin was detected and counted
-	 */
-	bool DetectEuroCoinsImproved(OVC *blob, OVC *euroBlobs, int neuroBlobs, 
-	                           int *excludeList, int *counters, int distThresholdSq);
-
-	// Constants for Euro coin diameters
-	extern const float D_1EURO;
-	extern const float D_2EURO;
-
-#ifdef __cplusplus
-}
-#endif
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//                    FUNÇÕES PARA MOEDAS
