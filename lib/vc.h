@@ -445,7 +445,86 @@ extern "C"
 	 */
 	int GetLastCoinTypeAtLocation(int x, int y);
 
+	/**
+	 * @brief Calculate adaptive tolerance based on coin position and frame edge proximity
+	 * 
+	 * @param xc X-coordinate of coin center
+	 * @param yc Y-coordinate of coin center
+	 * @param frameWidth Width of the frame
+	 * @param frameHeight Height of the frame
+	 * @return Adjusted tolerance value
+	 */
+	float CalculateAdaptiveTolerance(int xc, int yc, int frameWidth, int frameHeight);
 
+	/**
+	 * @brief Calibrate the pixel-to-mm conversion factor using a reference coin
+	 * 
+	 * @param referenceBlob Blob of a reference coin (any coin with known diameter)
+	 * @param referenceCoinType Type of the reference coin (1-6 for euro cents)
+	 * @return True if calibration successful, false otherwise
+	 */
+	bool CalibrateWithReferenceCoin(OVC *referenceBlob, int referenceCoinType);
+
+	/**
+	 * @brief Get expected pixel diameter based on coin type and current calibration
+	 * 
+	 * @param coinType Type of coin (1-6 for euro cents)
+	 * @return Expected diameter in pixels
+	 */
+	float GetExpectedDiameter(int coinType);
+
+	/**
+	 * @brief Improved copper coin detection with adaptive tolerance
+	 */
+	bool DetectBronzeCoinsImproved(OVC *blob, OVC *copperBlobs, int ncopperBlobs, 
+                             int *excludeList, int *counters, int distThresholdSq);
+
+	/**
+	 * @brief Improved gold coin detection with adaptive tolerance and better edge handling
+	 */
+	bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
+                           int *excludeList, int *counters, int distThresholdSq);
+
+	/**
+	 * @brief Draw improved visualization with annotations
+	 */
+	void DrawCoinsWithInfo(IVC *frame, OVC *coinBlobs, int nBlobs, int *coinCounts);
+
+	/**
+	 * @brief Draw a rectangle in the image
+	 */
+	void DrawRectangle(IVC *image, int x, int y, int width, int height, 
+                  unsigned char r, unsigned char g, unsigned char b);
+
+	/**
+	 * @brief Draw a circle in the image
+	 */
+	void DrawCircle(IVC *image, int x, int y, int radius,
+               unsigned char r, unsigned char g, unsigned char b);
+
+	/**
+	 * @brief Draw text on the image
+	 */
+	void DrawText(IVC *image, const char* text, int x, int y,
+             unsigned char r, unsigned char g, unsigned char b, int fontSize);
+
+	/**
+	 * @brief Draw a thick circle around a coin
+	 */
+	void DrawThickCircle(IVC *image, int centerX, int centerY, int radius,
+                    unsigned char r, unsigned char g, unsigned char b, int thickness);
+
+	/**
+	 * @brief Draw digits directly as pixels for coin values
+	 */
+	void DrawDigitPixels(IVC *image, int value, int centerX, int centerY, 
+                    unsigned char r, unsigned char g, unsigned char b);
+                    
+	/**
+	 * @brief Draw simple text for status display
+	 */
+	void DrawSimpleText(IVC *image, const char* text, int x, int y,
+                  unsigned char r, unsigned char g, unsigned char b);
 
 #ifdef __cplusplus
 }

@@ -26,9 +26,9 @@ extern "C"
 // Contador de frames para rastreamento de moedas
 static int frameCounter = 0;
 
-// Buffer para rastrear moedas já detectadas (formato: x, y, tipo, frame)
+// Buffer para rastrear moedas já detectadas (formato: x, y, tipo, frame, contado)
 #define MAX_TRACKED_COINS 150  // Increased to track more coins
-static int detectedCoins[MAX_TRACKED_COINS][4] = {{0}};
+static int detectedCoins[MAX_TRACKED_COINS][5] = {{0}}; // Added 5th element for "counted" flag
 
 /**
  * @brief Incrementa o contador de frames para rastreamento de moedas
@@ -42,11 +42,11 @@ void IncrementFrameCounter()
 }
 
 /**
- * @brief Verifica se uma moeda já foi detectada anteriormente
+ * @brief Verifica se uma moeda já foi detectada anteriormente e já foi contada
  * @param x Coordenada X da moeda
  * @param y Coordenada Y da moeda
  * @param coinType Tipo de moeda (1-8)
- * @return 1 se já detectada, 0 caso contrário
+ * @return 1 se já detectada e contada, 0 caso contrário
  */
 int IsCoinAlreadyDetected(int x, int y, int coinType)
 {
@@ -54,6 +54,7 @@ int IsCoinAlreadyDetected(int x, int y, int coinType)
     const int distThresholdSq = distanceThreshold * distanceThreshold;
     const int frameMemory = 30;        // Número de frames para lembrar moedas detectadas
     
+    // First check if we've already counted this coin before
     for (int i = 0; i < MAX_TRACKED_COINS; i++) {
         // Ignorar entradas vazias
         if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) 
@@ -65,16 +66,21 @@ int IsCoinAlreadyDetected(int x, int y, int coinType)
             int dy = detectedCoins[i][1] - y;
             int distSq = dx*dx + dy*dy;
             
-            // Verificar se está dentro da distância e recente o suficiente
-            if (distSq <= distThresholdSq && 
-                (frameCounter - detectedCoins[i][3] < frameMemory || 
-                detectedCoins[i][3] > frameCounter)) { // Handle counter reset
-                
+            // If this coin is close to a previously counted one, it's the same coin
+            if (distSq <= distThresholdSq) {
                 // Atualiza a posição e frame
                 detectedCoins[i][0] = x;
                 detectedCoins[i][1] = y;
                 detectedCoins[i][3] = frameCounter;
-                return 1;  // Já detectada
+                
+                // Check if already counted
+                if (detectedCoins[i][4] == 1) {
+                    return 1;  // Coin already counted, don't count again
+                }
+                
+                // Mark as counted
+                detectedCoins[i][4] = 1;
+                return 0;  // First time counting this coin
             }
         }
     }
@@ -86,6 +92,7 @@ int IsCoinAlreadyDetected(int x, int y, int coinType)
             detectedCoins[i][1] = y;
             detectedCoins[i][2] = coinType;
             detectedCoins[i][3] = frameCounter;
+            detectedCoins[i][4] = 1;  // Mark as counted
             break;
         }
     }
@@ -371,25 +378,25 @@ int GetLastCoinTypeAtLocation(int x, int y)
     return nearestType;
 }
 
+
 /**
- * @brief Desenha visualizações de moedas - simplified version that only handles gold and copper coins
+ * @brief Simplified coin drawing function - delegates to DrawBoundingBoxes
  */
 void DrawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, 
               int nGoldBlobs, int nCopperBlobs, 
               OVC *silverBlobs, int nSilverBlobs)
 {
-    // Draw copper coins first (typically smaller denominations)
+    // Simply call DrawBoundingBoxes for copper and gold coins
+    // 0 = copper coins, 1 = gold coins
     if (copperBlobs && nCopperBlobs > 0) {
-        DrawBoundingBoxes(frame, copperBlobs, nCopperBlobs, 0);  // 0 = copper coins
+        DrawBoundingBoxes(frame, copperBlobs, nCopperBlobs, 0);
     }
     
-    // Draw gold coins second (larger denominations)
     if (goldBlobs && nGoldBlobs > 0) {
-        DrawBoundingBoxes(frame, goldBlobs, nGoldBlobs, 1);  // 1 = gold coins
+        DrawBoundingBoxes(frame, goldBlobs, nGoldBlobs, 1);
     }
-    
-    // Silver coins are ignored completely
 }
+
 
 #ifdef __cplusplus
 }

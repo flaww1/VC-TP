@@ -397,12 +397,19 @@ extern "C"
         const int DISTANCE_THRESHOLD_SQ = 30 * 30;
         const int AREA_MIN_THRESHOLD = 9000;
         
+        // Frame dimensions for coin detection
+        const int FRAME_WIDTH = src->width;
+        const int FRAME_HEIGHT = src->height;
+        
+        // Margin to ensure full coin visibility
+        const int FULL_VISIBILITY_MARGIN = 20;
+        
         // Temporary frame coin count
         int frameCoins[6] = {0}; // Only counting 6 types now (1c to 50c)
 
         // Use a bitmap for faster collision detection (1 bit per 4 pixels)
-        const int MAP_WIDTH = 320;
-        const int MAP_HEIGHT = 240;
+        const int MAP_WIDTH = FRAME_WIDTH / 2;
+        const int MAP_HEIGHT = FRAME_HEIGHT / 2;
         const int MAP_SIZE = MAP_WIDTH * MAP_HEIGHT;
         unsigned char *detectionMap = (unsigned char*)calloc(MAP_SIZE, sizeof(unsigned char));
         
@@ -417,13 +424,20 @@ extern "C"
             
             // Quick reject based on area and position
             if (blob->area <= AREA_MIN_THRESHOLD || blob->area >= 30000 ||
-                blob->yc >= 650 || blob->yc <= 550 || blob->width > 220) {
-                    
-                // Check if this belongs to the upper region that should be excluded
-                if (blob->yc >= 400 && blob->yc <= 550) {
-                    ExcludeCoin(excludeList, blob->xc, blob->yc, 1);
-                }
+                blob->width > 220) {
                 continue;
+            }
+            
+            // Calculate blob radius from area for checking full visibility
+            float diameter = CalculateCircularDiameter(blob);
+            float radius = diameter / 2.0f;
+            
+            // Check if the coin is fully visible with margin
+            if (blob->xc - radius < FULL_VISIBILITY_MARGIN || 
+                blob->xc + radius >= FRAME_WIDTH - FULL_VISIBILITY_MARGIN || 
+                blob->yc - radius < FULL_VISIBILITY_MARGIN || 
+                blob->yc + radius >= FRAME_HEIGHT - FULL_VISIBILITY_MARGIN) {
+                continue; // Skip partially visible coins
             }
             
             // Calculate map position (downsized by factor of 2)
@@ -465,17 +479,23 @@ extern "C"
             if (isExcluded)
                 continue;
             
-            // Try to detect coins - first gold coins, then copper if no gold found
-            bool coinFound = DetectGoldCoins(blob, blobs2, nlabels2, excludeList, frameCoins, DISTANCE_THRESHOLD_SQ);
+            // Create temporary counters for this frame only
+            int frameCoins[6] = {0};
+            
+            // Try to detect coins using improved algorithms - only checking for fully visible coins
+            bool coinFound = DetectGoldCoinsImproved(blob, blobs2, nlabels2, excludeList, frameCoins, DISTANCE_THRESHOLD_SQ);
             
             if (!coinFound) {
-                coinFound = DetectBronzeCoins(blob, blobs3, nlabels3, excludeList, frameCoins, DISTANCE_THRESHOLD_SQ);
+                coinFound = DetectBronzeCoinsImproved(blob, blobs3, nlabels3, excludeList, frameCoins, DISTANCE_THRESHOLD_SQ);
             }
-        }
-
-        // Update all coin counts (indices 0-5: 1c through 50c)
-        for (int i = 0; i < 6; i++) {
-            coinCounts[i] += frameCoins[i];
+            
+            // Add frame counts to total counts
+            for (int j = 0; j < 6; j++) {
+                coinCounts[j] += frameCoins[j];
+            }
+            
+            // We don't need to detect partial coins since all are fully visible at some point
+            // So we skip the DetectPartialCoins call
         }
 
         // Free the detection map
@@ -487,6 +507,15 @@ extern "C"
      */
     void ProcessFrame(IVC *frame, IVC *frame2, int *excludeList, int *coinCounts)
     {
+        // Initialize coinCounts to 0 if this is the first frame
+        static bool firstFrame = true;
+        if (firstFrame) {
+            for (int i = 0; i < 6; i++) {
+                coinCounts[i] = 0;
+            }
+            firstFrame = false;
+        }
+        
         // Increment frame counter for coin tracking
         IncrementFrameCounter();
         
@@ -500,6 +529,7 @@ extern "C"
         IVC *rgbImage = NULL, *hsvImage = NULL, *hsvImage2 = NULL;
         IVC *grayImage = NULL, *grayImage2 = NULL, *grayImage3 = NULL;
         IVC *binaryImage = NULL, *binaryImage2 = NULL, *binaryImage3 = NULL;
+        IVC *edgeImage = NULL;
         OVC *blobs = NULL, *blobs2 = NULL, *blobs3 = NULL;
         int nlabels = 0, nlabels2 = 0, nlabels3 = 0;
         
@@ -515,11 +545,14 @@ extern "C"
         binaryImage = vc_image_new(frame->width, frame->height, 1, 255);
         binaryImage2 = vc_image_new(frame->width, frame->height, 1, 255);
         binaryImage3 = vc_image_new(frame->width, frame->height, 1, 255);
+        
+        edgeImage = vc_image_new(frame->width, frame->height, 1, 255);
 
         // Check if any allocation failed
         if (!rgbImage || !hsvImage || !hsvImage2 ||
             !grayImage || !grayImage2 || !grayImage3 ||
-            !binaryImage || !binaryImage2 || !binaryImage3) {
+            !binaryImage || !binaryImage2 || !binaryImage3 ||
+            !edgeImage) {
             fprintf(stderr, "Memory allocation failed in ProcessFrame\n");
             goto cleanup;
         }
@@ -529,8 +562,17 @@ extern "C"
         memcpy(hsvImage->data, rgbImage->data, frame->width * frame->height * 3);
         
         vc_rgb_to_gray(rgbImage, grayImage);
+        
+        // Edge detection for improved coin detection (Prewitt with low threshold)
+        vc_gray_edge_prewitt(grayImage, edgeImage, 20.0f);
+        
+        // Apply negative and binarization
         vc_gray_negative(grayImage);
         vc_gray_to_binary(grayImage, binaryImage, 150);
+        
+        // Apply morphological operations to clean up the binary image
+        vc_binary_open(binaryImage, binaryImage, 3); // Remove small noise
+        vc_binary_close(binaryImage, binaryImage, 5); // Fill small holes
 
         // IMPROVED: Gold coin segmentation with better HSV thresholds
         vc_rgb_to_hsv(hsvImage, 0); // 0 = gold coin segmentation (adjusted for better gold detection)
@@ -566,10 +608,10 @@ extern "C"
             FilterCopperCoinBlobs(blobs3, nlabels3);
         }
 
-        // Process detected objects for coin detection
+        // Process detected objects for coin detection with improved algorithms
         ProcessImage(frame, blobs, blobs2, blobs3, nlabels, nlabels2, nlabels3, excludeList, coinCounts);
         
-        // Draw visualizations - only pass gold and copper coins
+        // Draw visualizations using improved function
         DrawCoins(frame, blobs2, blobs3, nlabels2, nlabels3, NULL, 0);
 
     cleanup:
@@ -578,6 +620,7 @@ extern "C"
         if (blobs2) free(blobs2);
         if (blobs) free(blobs);
         
+        if (edgeImage) vc_image_free(edgeImage);
         if (binaryImage3) vc_image_free(binaryImage3);
         if (binaryImage2) vc_image_free(binaryImage2);
         if (binaryImage) vc_image_free(binaryImage);
