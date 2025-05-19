@@ -1,6 +1,0 @@
-/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles/VisaoComputador.dir
-/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles/edit_cache.dir
-/home/flavio/Downloads/TrabalhoVC/build/CMakeFiles/rebuild_cache.dir
-/home/flavio/Downloads/TrabalhoVC/build/lib/CMakeFiles/vclib.dir
-/home/flavio/Downloads/TrabalhoVC/build/lib/CMakeFiles/edit_cache.dir
-/home/flavio/Downloads/TrabalhoVC/build/lib/CMakeFiles/rebuild_cache.dir
