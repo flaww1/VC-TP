@@ -1,10 +1,6 @@
 /**
  * @file vc_coin.cpp
- * @brief Funções consolidadas para deteção e classificação de moedas.
- *
- * Este ficheiro contém implementações de funções que permitem detetar e
- * classificar moedas em imagens, com suporte para rastreamento entre frames
- * e funções de utilidade para cálculos geométricos.
+ * @brief Consolidated functions for coin detection and classification.
  *
  * @author Grupo 7 ( Daniel - 26432 / Maria - 26438 / Bruno - 26014 / Flávio - 21110)
  * @date 2024/2025
@@ -22,7 +18,7 @@
 extern "C" {
 #endif
 
-// Constantes para diâmetros de moedas (em pixels)
+// Constants for coin diameters (in pixels) - renamed for consistency
 const float DIAM_1CENT = 122.0f;
 const float DIAM_2CENT = 135.0f;
 const float DIAM_5CENT = 152.0f;
@@ -33,48 +29,36 @@ const float DIAM_1EURO = 185.0f;
 const float DIAM_2EURO = 195.0f;
 const float BASE_TOLERANCE = 0.08f;
 
-// Variáveis globais para rastreamento de moedas
-static int frameCountValue = 0;  // Contador de frames
+// Global variables for coin tracking
+static int frameCountValue = 0;  // Renamed to avoid conflict
 int MAX_TRACKED_COINS = 150;
-int detectedCoins[150][5] = {{0}}; // [x, y, tipoMoeda, frameDetectado, contabilizada]
+int detectedCoins[150][5] = {{0}}; // [x, y, coinType, frameDetected, counted]
 
 /**
- * @brief Incrementa ou reinicia o contador de frames
- *
- * Esta função é utilizada para manter um contador global de frames,
- * que serve como referência temporal para o sistema de rastreamento
- * de moedas.
- *
- * @param reset Se for 1, reinicia o contador; se for 0, incrementa-o
+ * @brief Increment or reset the frame counter
  */
 void frameCounter(int reset) {
     if (reset) {
         frameCountValue = 0;
     } else {
         frameCountValue++;
-        // Reinicia em 1000 para evitar overflow
+        // Reset at 1000 to avoid overflow
         if (frameCountValue > 1000) frameCountValue = 0;
     }
 }
 
 /**
- * @brief Obtém o valor atual do contador de frames
- *
- * @return O valor atual do contador de frames
+ * @brief Get the current frame count
  */
 int getFrameCount() {
     return frameCountValue;
 }
 
 /**
- * @brief Calcula a circularidade de um blob
+ * @brief Calculate the circularity of a blob
  * 
- * Esta função implementa o cálculo de circularidade para um blob,
- * que é usado como medida de quão próximo o objeto está de uma forma circular.
- * A circularidade é calculada como 4π × área / perímetro².
- * 
- * @param blob Ponteiro para a estrutura do blob
- * @return Valor de circularidade entre 0 e 1, onde 1 representa um círculo perfeito
+ * @details Centralized implementation of the circularity calculation
+ * that is used across the entire project
  */
 float getCircularity(OVC *blob) {
     if (blob->perimeter <= 0)
@@ -89,39 +73,24 @@ float getCircularity(OVC *blob) {
 }
 
 /**
- * @brief Calcula o diâmetro de um blob circular
- *
- * Estima o diâmetro de um blob assumindo que este tem forma circular,
- * utilizando a fórmula derivada da área de um círculo (A = πr²).
- * 
- * @param blob Ponteiro para a estrutura do blob
- * @return Diâmetro estimado do blob em pixels
+ * @brief Calculate the diameter of a circular blob
  */
 float getDiameter(OVC *blob) {
     return 2.0f * sqrtf((float)blob->area / 3.14159f);
 }
 
 /**
- * @brief Calcula uma tolerância adaptativa baseada na proximidade às bordas da imagem
- *
- * Esta função aumenta a tolerância para a classificação de moedas quando estas
- * estão próximas às bordas da imagem, compensando distorções de perspetiva.
- * 
- * @param xc Coordenada X do centro do blob
- * @param yc Coordenada Y do centro do blob
- * @param frameWidth Largura da imagem
- * @param frameHeight Altura da imagem
- * @return Valor de tolerância adaptado
+ * @brief Calculate adaptive tolerance based on proximity to frame edge
  */
 float adaptTolerance(int xc, int yc, int frameWidth, int frameHeight) {
     float tolerance = BASE_TOLERANCE;
     const int edgeMargin = 50;
     
-    // Encontra a distância mínima a qualquer borda
+    // Find minimum distance to any edge
     float minDist = fminf(fminf((float)xc, (float)(frameWidth - xc)), 
                          fminf((float)yc, (float)(frameHeight - yc)));
     
-    // Aumenta a tolerância próximo às bordas
+    // Increase tolerance near edges
     if (minDist < edgeMargin)
         tolerance *= 1.0f + 0.5f * (1.0f - (minDist / edgeMargin));
     
@@ -129,16 +98,7 @@ float adaptTolerance(int xc, int yc, int frameWidth, int frameHeight) {
 }
 
 /**
- * @brief Regista e verifica se uma moeda já foi detetada anteriormente
- *
- * Esta função implementa um mecanismo de rastreamento de moedas entre frames,
- * evitando que a mesma moeda seja contada múltiplas vezes ao longo do tempo.
- * 
- * @param x Coordenada X do centro da moeda
- * @param y Coordenada Y do centro da moeda
- * @param coinType Tipo de moeda (1=1c, 2=2c, 3=5c, etc.)
- * @param countIt Indica se deve marcar a moeda como contabilizada
- * @return 1 se a moeda já foi contada, 0 caso contrário
+ * @brief Track if a coin has been detected already
  */
 int trackCoin(int x, int y, int coinType, int countIt) {
     const int distThreshold = (coinType >= 7) ? 75 : 50;
@@ -149,7 +109,7 @@ int trackCoin(int x, int y, int coinType, int countIt) {
     int existingIndex = -1;
     int emptyIndex = -1;
     
-    // Trata moedas de Euro substituindo moedas douradas
+    // Handle Euro coins replacing gold coins
     if (coinType >= 7) {
         for (int i = 0; i < MAX_TRACKED_COINS; i++) {
             if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0)
@@ -168,7 +128,7 @@ int trackCoin(int x, int y, int coinType, int countIt) {
         }
     }
     
-    // Procura posição existente ou vazia
+    // Find existing or empty slot
     for (int i = 0; i < MAX_TRACKED_COINS; i++) {
         if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) {
             if (emptyIndex == -1) emptyIndex = i;
@@ -180,13 +140,13 @@ int trackCoin(int x, int y, int coinType, int countIt) {
         const int distSq = dx*dx + dy*dy;
         
         if (distSq <= distThresholdSq) {
-            // Janela de frames válida
+            // Valid frame window
             if ((currentFrame - detectedCoins[i][3] < frameMemory) || 
                 detectedCoins[i][3] > currentFrame) {
                 
                 existingIndex = i;
                 
-                // Trata Euro substituindo moedas douradas
+                // Handle Euro replacing gold
                 if (coinType >= 7 && detectedCoins[i][2] >= 4 && detectedCoins[i][2] <= 6) {
                     detectedCoins[i][2] = coinType;
                 }
@@ -196,14 +156,14 @@ int trackCoin(int x, int y, int coinType, int countIt) {
         }
     }
     
-    // Atualiza entrada existente ou adiciona nova entrada
+    // Update existing or add new entry
     if (existingIndex >= 0) {
-        // Atualiza posição e timestamp
+        // Update position and timestamp
         detectedCoins[existingIndex][0] = x;
         detectedCoins[existingIndex][1] = y;
         detectedCoins[existingIndex][3] = currentFrame;
         
-        // Trata contabilização
+        // Handle counting
         if (countIt && detectedCoins[existingIndex][4] == 0) {
             detectedCoins[existingIndex][4] = 1;
             return 0;
@@ -212,7 +172,7 @@ int trackCoin(int x, int y, int coinType, int countIt) {
         return detectedCoins[existingIndex][4];
     }
     
-    // Adiciona nova entrada se possível
+    // Add new entry if possible
     if (emptyIndex >= 0) {
         detectedCoins[emptyIndex][0] = x;
         detectedCoins[emptyIndex][1] = y;
@@ -225,14 +185,7 @@ int trackCoin(int x, int y, int coinType, int countIt) {
 }
 
 /**
- * @brief Obtém o último tipo de moeda detetado numa determinada localização
- *
- * Esta função consulta o histórico de moedas detetadas e retorna o tipo
- * da moeda mais próxima à localização especificada.
- * 
- * @param x Coordenada X a verificar
- * @param y Coordenada Y a verificar
- * @return Tipo da moeda (1-8) ou 0 se nenhuma moeda for encontrada
+ * @brief Get last detected coin type at a location
  */
 int getCoinTypeAtLocation(int x, int y) {
     const int distThresholdSq = 50*50;
@@ -257,17 +210,7 @@ int getCoinTypeAtLocation(int x, int y) {
 }
 
 /**
- * @brief Adiciona ou remove uma moeda da lista de exclusão
- *
- * Esta função gerencia uma lista de moedas que devem ser ignoradas
- * durante o processamento, útil para evitar reanálise de moedas já
- * classificadas ou para marcar regiões problemáticas.
- * 
- * @param excludeList Ponteiro para a lista de exclusão
- * @param xc Coordenada X do centro da moeda
- * @param yc Coordenada Y do centro da moeda
- * @param option 0 para adicionar à lista, 1 para remover da lista
- * @return 0 após conclusão
+ * @brief Add or remove a coin from exclusion list
  */
 int excludeCoin(int *excludeList, int xc, int yc, int option) {
     if (!excludeList) return 0;
@@ -275,7 +218,7 @@ int excludeCoin(int *excludeList, int xc, int yc, int option) {
     const int PROXIMITY_THRESHOLD_SQ = 30 * 30;
     
     if (option == 0) {
-        // Adiciona à lista de exclusão
+        // Add to exclusion list
         for (int i = 0; i < MAX_COINS; i++) {
             if (excludeList[i * 2] == 0 && excludeList[i * 2 + 1] == 0) {
                 excludeList[i * 2] = xc;
@@ -285,7 +228,7 @@ int excludeCoin(int *excludeList, int xc, int yc, int option) {
         }
     }
     else if (option == 1) {
-        // Remove da lista de exclusão
+        // Remove from exclusion list
         for (int i = 0; i < MAX_COINS; i++) {
             if (excludeList[i * 2] == 0 && excludeList[i * 2 + 1] == 0) {
                 continue;
@@ -306,14 +249,7 @@ int excludeCoin(int *excludeList, int xc, int yc, int option) {
 }
 
 /**
- * @brief Corrige moedas douradas identificadas incorretamente quando moedas de Euro são detetadas
- *
- * Esta função evita contagem duplicada quando uma moeda de Euro é confundida
- * com uma moeda dourada devido a condições de iluminação ou oclusão parcial.
- * 
- * @param x Coordenada X do centro da moeda de Euro
- * @param y Coordenada Y do centro da moeda de Euro
- * @param counters Array de contadores para cada tipo de moeda
+ * @brief Correct misidentified gold coins when Euro coins are detected
  */
 void correctGoldCoins(int x, int y, int *counters) {
     const int distThresholdSq = 80*80;
@@ -330,11 +266,11 @@ void correctGoldCoins(int x, int y, int *counters) {
             const int goldType = detectedCoins[i][2];
             const int goldCounterIdx = goldType - 1;
             
-            // Diminui o contador se necessário
+            // Decrease counter if necessary
             if (counters[goldCounterIdx] > 0)
                 counters[goldCounterIdx]--;
                 
-            // Limpa entrada
+            // Clear entry
             memset(&detectedCoins[i][0], 0, 5 * sizeof(int));
             break;
         }
@@ -342,19 +278,7 @@ void correctGoldCoins(int x, int y, int *counters) {
 }
 
 /**
- * @brief Desenha as moedas com etiquetas no frame
- *
- * Esta função visualiza as moedas detetadas na imagem original,
- * desenhando círculos coloridos e rótulos que indicam o tipo de moeda.
- * As cores variam conforme o tipo: cobre, dourado ou bicolor (Euro).
- * 
- * @param frame Ponteiro para a imagem onde as moedas serão desenhadas
- * @param goldBlobs Array de blobs de moedas douradas
- * @param copperBlobs Array de blobs de moedas de cobre
- * @param euroBlobs Array de blobs de moedas de Euro
- * @param nGoldBlobs Número de blobs dourados
- * @param nCopperBlobs Número de blobs de cobre
- * @param nEuroBlobs Número de blobs de Euro
+ * @brief Draw coins with labels on the frame
  */
 void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
               int nGoldBlobs, int nCopperBlobs, int nEuroBlobs) {
@@ -364,20 +288,20 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
     const int width = frame->width;
     const int height = frame->height;
 
-    // Desenha primeiro as moedas de Euro (têm prioridade)
+    // Draw Euro coins first (they have priority)
     if (euroBlobs && nEuroBlobs > 0) {
-        // Encontra o melhor blob de Euro em uma única passagem
+        // Find best Euro blob in one pass
         OVC bestEuro = {0};
         bool foundValidEuro = false;
         
         float bestCircularity = 0.0f;
         int bestArea = 0;
         
-        // Constantes
+        // Constants
         const int MAX_VALID_AREA = 100000;
         const int MIN_VALID_AREA = 12000;
         
-        // Primeiro procura moedas de Euro completas
+        // Find complete Euro coins first
         for (int i = 0; i < nEuroBlobs; i++) {
             if (euroBlobs[i].area > MAX_VALID_AREA)
                 continue;
@@ -385,9 +309,9 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
             const float diameter = getDiameter(&euroBlobs[i]);
             const float circularity = getCircularity(&euroBlobs[i]);
             
-            // Deteção de Euro completo
+            // Complete Euro detection
             if (diameter >= 175.0f && diameter <= 210.0f && circularity >= 0.75f) {
-                // Ignora se esta for uma posição de moeda dourada
+                // Skip if this is a gold coin position
                 const int lastType = getCoinTypeAtLocation(euroBlobs[i].xc, euroBlobs[i].yc);
                 if (lastType >= 4 && lastType <= 6)
                     continue;
@@ -395,11 +319,11 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 memcpy(&bestEuro, &euroBlobs[i], sizeof(OVC));
                 bestEuro.label = 999;
                 foundValidEuro = true;
-                break; // Primeira correspondência é suficiente
+                break; // First match is sufficient
             }
         }
         
-        // Se nenhuma moeda completa for encontrada, procura por partes válidas
+        // If no complete coins found, look for valid parts
         if (!foundValidEuro) {
             for (int i = 0; i < nEuroBlobs; i++) {
                 if (euroBlobs[i].area < MIN_VALID_AREA || euroBlobs[i].area > MAX_VALID_AREA)
@@ -411,7 +335,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                     euroBlobs[i].width >= 130 && euroBlobs[i].height >= 130 &&
                     euroBlobs[i].area > bestArea) {
                     
-                    // Ignora se esta for uma posição de moeda dourada
+                    // Skip if this is a gold coin position
                     const int lastType = getCoinTypeAtLocation(euroBlobs[i].xc, euroBlobs[i].yc);
                     if (lastType >= 4 && lastType <= 6)
                         continue;
@@ -424,27 +348,27 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
             }
         }
         
-        // Desenha moedas de Euro se encontradas
+        // Draw Euro coins if found
         if (foundValidEuro) {
             const float diameter = getDiameter(&bestEuro);
             const int radius = (int)(diameter / 2.0f);
             const int centerX = bestEuro.xc;
             const int centerY = bestEuro.yc;
             
-            // Ignora se fora dos limites
+            // Skip if out of bounds
             if (centerX < 0 || centerX >= width || centerY < 0 || centerY >= height)
                 return;
                 
-            // Desenha círculo para moeda de Euro
-            const unsigned char blueColor[3] = {255, 130, 0}; // Azul em BGR
+            // Draw circle for Euro coin
+            const unsigned char blueColor[3] = {255, 130, 0}; // Blue in BGR
             
-            // Desenha círculo simples
+            // Draw simple circle
             for (int angle = 0; angle < 360; angle++) {
                 float radAngle = angle * (M_PI / 180.0f);
                 int x = (int)(centerX + radius * cosf(radAngle));
                 int y = (int)(centerY + radius * sinf(radAngle));
                 
-                // Verifica limites da imagem
+                // Check boundaries
                 if (x >= 0 && x < width && y >= 0 && y < height) {
                     int pos = y * bytesperline + x * channels;
                     data[pos] = blueColor[0];     // B
@@ -453,10 +377,10 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 }
             }
             
-            // Desenha ponto central e rótulos
+            // Draw center dot and labels
             bool is2Euro = (diameter >= 185.0f || bestEuro.area >= 14000);
             
-            // Desenha um ponto central simples
+            // Draw a simple center dot
             const int dotRadius = 3;
             for (int y = centerY - dotRadius; y <= centerY + dotRadius; y++) {
                 for (int x = centerX - dotRadius; x <= centerX + dotRadius; x++) {
@@ -469,11 +393,11 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 }
             }
             
-            // Desenha um rótulo simplificado
+            // Draw a simplified label
             int textX = centerX - 10;
             int textY = centerY + 30;
             if (textX >= 0 && textX < width - 20 && textY >= 0 && textY < height) {
-                // Desenha um fundo preto para o texto
+                // Draw a black background for text
                 for (int y = textY - 10; y <= textY + 10; y++) {
                     for (int x = textX - 10; x <= textX + 20; x++) {
                         if (x >= 0 && x < width && y >= 0 && y < height) {
@@ -485,14 +409,14 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                     }
                 }
                 
-                // Desenha texto branco (versão simplificada)
+                // Draw white text (simplified version)
                 for (int y = textY - 5; y <= textY + 5; y++) {
                     for (int x = textX; x <= textX + (is2Euro ? 15 : 10); x++) {
                         if (x >= 0 && x < width && y >= 0 && y < height) {
                             int pos = y * bytesperline + x * channels;
                             data[pos] = 255;
-                            data[pos + 1] = 255; 
-                            data[pos + 2] = 255;
+                            data[pos + 1] = 255; // G
+                            data[pos + 2] = 255; // R
                         }
                     }
                 }
@@ -500,7 +424,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
         }
     }
     
-    // Desenha moedas de cobre
+    // Draw copper coins
     if (copperBlobs && nCopperBlobs > 0) {
         for (int i = 0; i < nCopperBlobs; i++) {
             if (copperBlobs[i].area < 7000 || copperBlobs[i].label == 0)
@@ -511,20 +435,20 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
             const int centerX = copperBlobs[i].xc;
             const int centerY = copperBlobs[i].yc;
             
-            // Ignora se fora dos limites
+            // Skip if out of bounds
             if (centerX < 0 || centerX >= width || centerY < 0 || centerY >= height)
                 continue;
                 
-            // Desenha círculo para moeda de cobre
-            const unsigned char copperColor[3] = {0, 80, 255}; // Laranja/Cobre em BGR
+            // Draw circle for copper coin
+            const unsigned char copperColor[3] = {0, 80, 255}; // Orange/Copper in BGR
             
-            // Desenha círculo simples
-            for (int angle = 0; angle < 360; angle += 3) { // Incremento de 3 graus para velocidade
+            // Draw simple circle
+            for (int angle = 0; angle < 360; angle += 3) { // Step by 3 degrees for speed
                 float radAngle = angle * (M_PI / 180.0f);
                 int x = (int)(centerX + radius * cosf(radAngle));
                 int y = (int)(centerY + radius * sinf(radAngle));
                 
-                // Verifica limites da imagem
+                // Check boundaries
                 if (x >= 0 && x < width && y >= 0 && y < height) {
                     int pos = y * bytesperline + x * channels;
                     data[pos] = copperColor[0];     // B
@@ -533,7 +457,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 }
             }
             
-            // Marca o centro
+            // Mark center
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dx = -2; dx <= 2; dx++) {
                     int x = centerX + dx;
@@ -547,15 +471,15 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 }
             }
             
-            // Adiciona um rótulo simplificado
+            // Add a simplified label
             const char *label = (diameter < 130) ? "1c" : 
                               (diameter < 145) ? "2c" : "5c";
             
-            // Renderização de texto muito básica no centro
+            // Very basic text rendering at the center
             int textX = centerX - 5;
             int textY = centerY + 20;
             if (textX >= 0 && textX < width - 10 && textY >= 0 && textY < height) {
-                // Cria um pequeno fundo preto
+                // Create a small black background
                 for (int dy = -5; dy <= 5; dy++) {
                     for (int dx = -5; dx <= 10; dx++) {
                         int x = textX + dx;
@@ -569,7 +493,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                     }
                 }
                 
-                // Desenha texto branco (muito simplificado)
+                // Draw white text (very simplified)
                 for (int dy = -4; dy <= 4; dy++) {
                     for (int dx = -4; dx <= 9; dx++) {
                         int x = textX + dx;
@@ -587,7 +511,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
         }
     }
     
-    // Desenha moedas douradas
+    // Draw gold coins
     if (goldBlobs && nGoldBlobs > 0) {
         for (int i = 0; i < nGoldBlobs; i++) {
             if (goldBlobs[i].area < 7000 || goldBlobs[i].label == 0)
@@ -598,14 +522,14 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
             const int centerX = goldBlobs[i].xc;
             const int centerY = goldBlobs[i].yc;
             
-            // Ignora se fora dos limites
+            // Skip if out of bounds
             if (centerX < 0 || centerX >= width || centerY < 0 || centerY >= height)
                 continue;
                 
-            // Desenha círculo para moeda dourada
-            const unsigned char goldColor[3] = {0, 215, 255}; // Amarelo/Dourado em BGR
+            // Draw circle for gold coin
+            const unsigned char goldColor[3] = {0, 215, 255}; // Yellow/Gold in BGR
             
-            // Desenha círculo simplificado
+            // Draw simplified circle
             for (int angle = 0; angle < 360; angle += 3) {
                 float radAngle = angle * (M_PI / 180.0f);
                 int x = (int)(centerX + radius * cosf(radAngle));
@@ -619,7 +543,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 }
             }
             
-            // Marca o centro
+            // Mark center
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dx = -2; dx <= 2; dx++) {
                     int x = centerX + dx;
@@ -633,15 +557,15 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                 }
             }
             
-            // Rótulo simples baseado no tamanho
+            // Simple label based on size
             const char *label = (diameter < 150) ? "10c" : 
                               (diameter < 170) ? "20c" : "50c";
             
-            // Renderização de texto muito básica
+            // Very basic text rendering
             int textX = centerX - 8;
             int textY = centerY + 20;
             if (textX >= 0 && textX < width - 15 && textY >= 0 && textY < height) {
-                // Fundo preto
+                // Black background
                 for (int dy = -5; dy <= 5; dy++) {
                     for (int dx = -5; dx <= 15; dx++) {
                         int x = textX + dx;
@@ -655,7 +579,7 @@ void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
                     }
                 }
                 
-                // Contorno do texto branco
+                // White text outline
                 for (int dy = -4; dy <= 4; dy++) {
                     for (int dx = -4; dx <= 14; dx++) {
                         int x = textX + dx;

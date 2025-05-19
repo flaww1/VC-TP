@@ -202,3 +202,62 @@ int blobInfo(IVC *src, OVC *blobs, int nblobs);
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //                    FUNÇÕES PARA MOEDAS
+
+// Constantes para diâmetros de moedas (em pixels)
+extern const float DIAM_1CENT;
+extern const float DIAM_2CENT;
+extern const float DIAM_5CENT;
+extern const float DIAM_10CENT;
+extern const float DIAM_20CENT;
+extern const float DIAM_50CENT;
+extern const float DIAM_1EURO;
+extern const float DIAM_2EURO;
+extern const float BASE_TOLERANCE;
+
+/**
+ * @brief Funções para deteção e classificação de moedas
+ */
+
+// Funções de deteção de moedas específicas
+bool detectCopperCoins(OVC *blob, OVC *copperBlobs, int ncopperBlobs, 
+                     int *excludeList, int *counters, int distThresholdSq);
+                     
+bool detectGoldCoins(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
+                   int *excludeList, int *counters, int distThresholdSq);
+                   
+bool detectEuroCoins(OVC *blob, OVC *euroBlobs, int neuroBlobs, 
+                   int *excludeList, int *counters, int distThresholdSq);
+
+// Funções auxiliares para o processador de frames
+void processFrame(IVC *frame, IVC *frame2, int *excludeList, int *coinCounts);
+
+// Funções de rastreamento e gestão de moedas
+int trackCoin(int x, int y, int coinType, int countIt);
+int excludeCoin(int *excludeList, int xc, int yc, int option);
+void frameCounter(int reset);
+int getFrameCount();
+void correctGoldCoins(int x, int y, int *counters);
+int getCoinTypeAtLocation(int x, int y);
+
+// Funções de análise de moedas
+float getCircularity(OVC *blob);
+float getDiameter(OVC *blob);
+float adaptTolerance(int xc, int yc, int frameWidth, int frameHeight);
+
+// Função de desenho de moedas
+void drawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
+              int nGoldBlobs, int nCopperBlobs, int nEuroBlobs);
+
+// Funções de utilidade para visão computacional
+bool isInFrame(int x, int y, int width, int height, int margin);
+float distance(int x1, int y1, int x2, int y2);
+int distanceSquared(int x1, int y1, int x2, int y2);
+int intersectionArea(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2);
+float calculateIoU(OVC *box1, OVC *box2);
+bool isSameObject(OVC *blob1, OVC *blob2, int maxDistSq);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // VC_H
