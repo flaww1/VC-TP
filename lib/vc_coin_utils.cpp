@@ -26,9 +26,18 @@ extern "C"
 // Contador de frames para rastreamento de moedas
 static int frameCounter = 0;
 
-// Buffer para rastrear moedas já detectadas (formato: x, y, tipo, frame, contado)
-#define MAX_TRACKED_COINS 150  // Increased to track more coins
-static int detectedCoins[MAX_TRACKED_COINS][5] = {{0}}; // Added 5th element for "counted" flag
+// Change from #define to actual variable so it can be accessed from other files
+// And make sure it's defined outside any function
+int MAX_TRACKED_COINS = 150;  // Increased to track more coins
+int detectedCoins[150][5] = {{0}}; // Added 5th element for "counted" flag
+
+// Structure to store coin detection statistics - update to include Euro coins
+typedef struct {
+    int frame;
+    int totalCoins;
+    float totalValue;
+    int coinCounts[8]; // 1c, 2c, 5c, 10c, 20c, 50c, 1€, 2€
+} DetectionStats;
 
 /**
  * @brief Incrementa o contador de frames para rastreamento de moedas
@@ -61,71 +70,117 @@ int GetFrameCounter()
  */
 int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt)
 {
-    const int distanceThreshold = 50;  // Proximity threshold (pixels)
+    // Use different distance thresholds based on coin type
+    int distanceThreshold;
+    
+    // Euro coins need larger threshold due to their size and parts detection
+    if (coinType >= 7) {
+        distanceThreshold = 75;  // Larger threshold for Euro coins - increased from 70
+    } else {
+        distanceThreshold = 50;  // Standard for regular coins
+    }
+    
     const int distThresholdSq = distanceThreshold * distanceThreshold;
-    const int frameMemory = 60;        // Remember coins for this many frames
+    
+    // Make frame memory longer for Euro coins to prevent double counting
+    int frameMemory = (coinType >= 7) ? 120 : 60;
     
     int existingIndex = -1;
     int emptyIndex = -1;
     
-    // First pass: look for the same coin in our tracking array
-    for (int i = 0; i < MAX_TRACKED_COINS; i++) {
-        // Record first empty slot
-        if (emptyIndex == -1 && detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) {
-            emptyIndex = i;
-            continue;
-        }
-        
-        // Skip empty entries
-        if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) 
-            continue;
-            
-        // Check if this is the same coin type and position
-        if (detectedCoins[i][2] == coinType) {
-            int dx = detectedCoins[i][0] - x;
-            int dy = detectedCoins[i][1] - y;
-            int distSq = dx*dx + dy*dy;
-            
-            // If nearby, this could be the same coin
-            if (distSq <= distThresholdSq) {
-                // Check if it's still within our time window
-                if (frameCounter - detectedCoins[i][3] < frameMemory || 
-                    detectedCoins[i][3] > frameCounter) { // Handle counter reset
+    // Special handling for Euro coins - check if a gold coin was detected at this position
+    // and was potentially the center part of a Euro coin
+    if (coinType >= 7) {  // If this is a Euro coin (1€ or 2€)
+        for (int i = 0; i < MAX_TRACKED_COINS; i++) {
+            // Skip empty entries
+            if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0)
+                continue;
+                
+            // Check if gold coin exists at this position
+            if (detectedCoins[i][2] >= 4 && detectedCoins[i][2] <= 6) {
+                int dx = detectedCoins[i][0] - x;
+                int dy = detectedCoins[i][1] - y;
+                int distSq = dx*dx + dy*dy;
+                
+                // INCREASED distance threshold for gold->euro replacement (70px->85px)
+                // This allows for faster detection when the gold coin is part of a Euro
+                if (distSq <= 85*85) {
+                    printf("INFO: Found conflicting gold coin at Euro position (%d,%d) - replacing\n", x, y);
                     
-                    existingIndex = i;
-                    break;
+                    // Clear the entry
+                    detectedCoins[i][0] = 0;
+                    detectedCoins[i][1] = 0;
+                    detectedCoins[i][2] = 0;
+                    detectedCoins[i][3] = 0;
+                    detectedCoins[i][4] = 0;
                 }
             }
         }
     }
     
-    // If we found the coin in our tracking system
+    // First pass: look for any coin at this position, even if type doesn't match
+    // This helps prevent gold coins being counted as Euro coins or vice versa
+    for (int i = 0; i < MAX_TRACKED_COINS; i++) {
+        // Skip empty entries but record first empty slot
+        if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) {
+            if (emptyIndex == -1) emptyIndex = i;
+            continue;
+        }
+        
+        // Check if any coin is at this position
+        int dx = detectedCoins[i][0] - x;
+        int dy = detectedCoins[i][1] - y;
+        int distSq = dx*dx + dy*dy;
+        
+        // If close enough, we consider it the same physical coin
+        if (distSq <= distThresholdSq) {
+            // Check if it's still within our time window
+            if ((frameCounter - detectedCoins[i][3] < frameMemory) || 
+                detectedCoins[i][3] > frameCounter) { // Handle counter reset
+                
+                // Found an existing coin at this location
+                existingIndex = i;
+                
+                // Special case: when transitioning between gold and Euro detection
+                // For Euro coins (types 7-8), prioritize this type if the position matches a gold coin
+                // This prevents a gold part of a Euro coin from blocking Euro detection
+                if (coinType >= 7 && detectedCoins[i][2] >= 4 && detectedCoins[i][2] <= 6) {
+                    printf("INFO: Upgrading possible gold coin detection to Euro coin at (%d,%d)\n", x, y);
+                    detectedCoins[i][2] = coinType; // Upgrade type to Euro
+                }
+                
+                break;
+            }
+        }
+    }
+    
+    // If we found a coin at this location
     if (existingIndex >= 0) {
-        // Update position and frame seen
+        // Always update position for tracking
         detectedCoins[existingIndex][0] = x;
         detectedCoins[existingIndex][1] = y;
         detectedCoins[existingIndex][3] = frameCounter;
         
-        // If we want to count and it's not already counted
+        // If we want to count this coin and it's not counted yet
         if (countIt && detectedCoins[existingIndex][4] == 0) {
             detectedCoins[existingIndex][4] = 1;  // Mark as counted
-            return 0;  // Indicate this is a "new" count
+            return 0;  // Return "new count"
         }
         
-        // Already counted or not counting now
-        return detectedCoins[existingIndex][4];  // Return counted status (1 if counted)
+        // Return counted status (1 if already counted)
+        return detectedCoins[existingIndex][4];
     }
     
-    // Not found - add to tracking if we have an empty slot
+    // Not found - add to tracking if we have space
     if (emptyIndex >= 0) {
         detectedCoins[emptyIndex][0] = x;
         detectedCoins[emptyIndex][1] = y;
         detectedCoins[emptyIndex][2] = coinType;
         detectedCoins[emptyIndex][3] = frameCounter;
-        detectedCoins[emptyIndex][4] = countIt ? 1 : 0;  // Mark counted if requested
+        detectedCoins[emptyIndex][4] = countIt ? 1 : 0;  // Mark as counted if requested
     }
     
-    return 0;  // New coin
+    return 0;  // New coin/position
 }
 
 /**
@@ -281,6 +336,8 @@ bool IsValidCoinShape(OVC *blob)
     return true;
 }
 
+
+
 /**
  * @brief Filtra blobs de moedas de cobre com base na circularidade e reporta moedas detectadas
  */
@@ -371,6 +428,52 @@ void FilterGoldCoinBlobs(OVC *blobs, int nlabels)
 }
 
 /**
+ * @brief Filter and validate potential Euro coin blobs
+ * 
+ * @param blobs Array of blobs to filter
+ * @param nlabels Number of blobs in the array
+ */
+void FilterEuroCoinBlobs(OVC *blobs, int nlabels)
+{
+    // Stricter circularity requirement for euro coins
+    const float MIN_CIRCULARITY = 0.78f;
+    const float TOLERANCE = 0.08f;
+    
+    for (int i = 0; i < nlabels; i++) {
+        // Skip already invalid blobs
+        if (blobs[i].label == 0) continue;
+        
+        float circularity = CalculateCircularity(&blobs[i]);
+        float diameter = CalculateCircularDiameter(&blobs[i]);
+        
+        // Euro coins are larger and need higher circularity
+        if (circularity < MIN_CIRCULARITY) {
+            blobs[i].label = 0;
+            continue;
+        }
+        
+        // Area threshold - Euro coins are larger
+        if (blobs[i].area < 15000) {
+            blobs[i].label = 0;
+            continue;
+        }
+        
+        // Log valid Euro coins
+        if (blobs[i].area > 15000) {
+            if (diameter >= D_1EURO * (1.0f - TOLERANCE) && diameter <= D_1EURO * (1.0f + TOLERANCE)) {
+                printf("IDENTIFICADO: 1 Euro | Diâm: %.1f | Área: %d | Circularity: %.2f\n",
+                      diameter, blobs[i].area, circularity);
+            }
+            else if (diameter >= D_2EURO * (1.0f - TOLERANCE) && diameter <= D_2EURO * (1.0f + TOLERANCE)) {
+                printf("IDENTIFICADO: 2 Euro | Diâm: %.1f | Área: %d | Circularity: %.2f\n",
+                      diameter, blobs[i].area, circularity);
+            }
+        }
+    }
+}
+
+
+/**
  * @brief Gets the most recent coin type detected at a specific location
  * This helps maintain coin type consistency when coins are partially visible
  * @param x X coordinate
@@ -405,26 +508,6 @@ int GetLastCoinTypeAtLocation(int x, int y)
     
     return nearestType;
 }
-
-
-/**
- * @brief Simplified coin drawing function - delegates to DrawBoundingBoxes
- */
-void DrawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, 
-              int nGoldBlobs, int nCopperBlobs, 
-              OVC *silverBlobs, int nSilverBlobs)
-{
-    // Simply call DrawBoundingBoxes for copper and gold coins
-    // 0 = copper coins, 1 = gold coins
-    if (copperBlobs && nCopperBlobs > 0) {
-        DrawBoundingBoxes(frame, copperBlobs, nCopperBlobs, 0);
-    }
-    
-    if (goldBlobs && nGoldBlobs > 0) {
-        DrawBoundingBoxes(frame, goldBlobs, nGoldBlobs, 1);
-    }
-}
-
 
 #ifdef __cplusplus
 }

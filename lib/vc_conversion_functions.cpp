@@ -199,7 +199,7 @@ extern "C"
      * segmenta diferentes tipos de moedas com base nos seus valores HSV.
      *
      * @param srcdst Imagem de entrada RGB e saída da segmentação
-     * @param segmentType Tipo de segmentação: 0 para moedas de 10, 20, 50 cêntimos e 1 euro; 1 para moedas de 1, 2, 5 cêntimos
+     * @param segmentType Tipo de segmentação: 0 para moedas douradas, 1 para moedas de cobre, 2 para moedas de Euro
      * @return 1 se a operação for bem sucedida, 0 em caso de erro
      */
     int vc_rgb_to_hsv(IVC *srcdst, int segmentType)
@@ -219,6 +219,9 @@ extern "C"
         // *      com valores de matiz entre 40° e 85°, saturação e valor acima de 50
         // *    - segmentType=1: Segmenta moedas de cobre (1, 2, 5 cêntimos)
         // *      com valores de matiz entre 15° e 40° e saturação acima de 80
+        // *    - segmentType=2: Segmenta moedas de Euro (1 e 2 euros)
+        // *      com baixa saturação para a parte prateada e valores específicos
+        // *      de matiz para capturar o anel dourado
         // *
         // * 3. Os píxeis que correspondem aos critérios são marcados como brancos (255),
         // *    enquanto os restantes tornam-se pretos (0), criando uma máscara binária.
@@ -292,7 +295,7 @@ extern "C"
             }
 
             if (segmentType == 0)
-            { // moedas 10 20 50 e 1 euro para binario
+            { // moedas 10 20 50 centimos (douradas) para binario
                 // Segmenta moedas douradas: matiz entre 40° e 85° (amarelados/dourados)
                 // Estas tonalidades douradas são típicas das moedas de 10, 20, 50 cêntimos
                 if ((hue >= 40.0f) && (hue <= 85.0f) && saturation >= 50.0f && value >= 50.0f)
@@ -309,7 +312,7 @@ extern "C"
                 }
             }
             else if (segmentType == 1)
-            { // moedas 1 2 5 centimos para binario
+            { // moedas 1 2 5 centimos (cobre) para binario
                 // Segmenta moedas de cobre: matiz entre 15° e 40° (tons avermelhados/acobreados)
                 // Com elevada saturação, típico das moedas de 1, 2 e 5 cêntimos
                 if ((hue >= 15.0f) && (hue <= 40.0f) && (saturation >= 80.0f))
@@ -320,6 +323,33 @@ extern "C"
                 }
                 else
                 {
+                    data[i] = 0;
+                    data[i + 1] = 0;
+                    data[i + 2] = 0;
+                }
+            }
+            else if (segmentType == 2)
+            { // moedas 1 e 2 euros (prateadas/bimetálicas)
+                // COMPLETELY NEW APPROACH FOR EURO COIN SEGMENTATION
+                // For white backgrounds, target specific metallic features
+
+                // Euro coins have distinctive characteristics:
+                // 1. The outer ring tends to be more yellowish/gold
+                // 2. The inner part is silver/gray with low saturation
+                // 3. They have a distinctive metallic "shine" with medium value
+                
+                // Target specific features of Euro coins
+                bool isOuterRing = (hue >= 30.0f && hue <= 90.0f && saturation >= 50.0f);
+                bool isInnerPart = (saturation < 50.0f && value > 80.0f && value < 220.0f);
+                bool isMetallicShine = (saturation < 40.0f && value > 160.0f);
+                
+                // Accept ANY part of a Euro coin
+                if (isOuterRing || isInnerPart || isMetallicShine) {
+                    data[i] = 255;
+                    data[i + 1] = 255;
+                    data[i + 2] = 255;
+                }
+                else {
                     data[i] = 0;
                     data[i + 1] = 0;
                     data[i + 2] = 0;

@@ -267,16 +267,19 @@ extern "C"
 	 * @brief Processa a imagem para detetar e classificar moedas
 	 * @param src Imagem original para análise
 	 * @param blobs Blobs da primeira segmentação
-	 * @param blobs2 Blobs da segunda segmentação (HSV tipo 0)
-	 * @param blobs3 Blobs da terceira segmentação (HSV tipo 1)
+	 * @param blobs2 Blobs da segunda segmentação (HSV tipo 0 - moedas douradas)
+	 * @param blobs3 Blobs da terceira segmentação (HSV tipo 1 - moedas de cobre)
+	 * @param blobs4 Blobs da quarta segmentação (HSV tipo 2 - moedas de Euro)
 	 * @param nlabels Número de blobs em blobs
 	 * @param nlabels2 Número de blobs em blobs2
 	 * @param nlabels3 Número de blobs em blobs3
+	 * @param nlabels4 Número de blobs em blobs4
 	 * @param excludeList Array para guardar coordenadas de moedas a excluir
 	 * @param coinCounts Array para contar ocorrências de cada tipo de moeda
 	 */
-	void ProcessImage(IVC *src, OVC *blobs, OVC *blobs2, OVC *blobs3, int nlabels, int nlabels2, int nlabels3, int *excludeList, int *coinCounts);
-
+	void ProcessImage(IVC *src, OVC *blobs, OVC *blobs2, OVC *blobs3, OVC *blobs4,
+	                int nlabels, int nlabels2, int nlabels3, int nlabels4,
+	                int *excludeList, int *coinCounts);
 
 	/**
 	 * @brief Verifica se um blob tem uma forma consistente de moeda
@@ -326,6 +329,13 @@ extern "C"
 	void FilterCopperCoinBlobs(OVC *blobs, int nlabels);
 
 	/**
+	 * @brief Filtra blobs de moedas de Euro (1€ e 2€)
+	 * @param blobs Array de blobs a filtrar
+	 * @param nlabels Número de blobs
+	 */
+	void FilterEuroCoinBlobs(OVC *blobs, int nlabels);
+
+	/**
 	 * @brief Incrementa o contador de frames para rastreamento de moedas
 	 */
 	void IncrementFrameCounter();
@@ -346,18 +356,17 @@ extern "C"
 	int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt);
 
 	/**
-	 * @brief Desenha visualizações de moedas
+	 * @brief Desenha visualizações de moedas com suporte para Euro coins
 	 * @param frame Frame onde desenhar
 	 * @param goldBlobs Blobs de moedas douradas
 	 * @param copperBlobs Blobs de moedas de cobre
+	 * @param euroBlobs Blobs de moedas de Euro
 	 * @param nGoldBlobs Número de blobs dourados
 	 * @param nCopperBlobs Número de blobs de cobre
-	 * @param silverBlobs Blobs de moedas prateadas (pode ser NULL)
-	 * @param nSilverBlobs Número de blobs prateados
+	 * @param nEuroBlobs Número de blobs de Euro
 	 */
-	void DrawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, 
-                int nGoldBlobs, int nCopperBlobs, 
-                OVC *silverBlobs, int nSilverBlobs);
+	void DrawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
+	              int nGoldBlobs, int nCopperBlobs, int nEuroBlobs);
 
 	/**
 	 * @brief Desenha caixas delimitadoras e centros de massa nas moedas detetadas
@@ -418,6 +427,23 @@ extern "C"
 	bool DetectGoldCoinsImproved(OVC *blob, OVC *goldBlobs, int ngoldBlobs, 
                            int *excludeList, int *counters, int distThresholdSq);
 
+	/**
+	 * @brief Detect 1 Euro and 2 Euro coins with adaptive tolerance
+	 * 
+	 * @param blob Main blob to check
+	 * @param euroBlobs Array of potential Euro coin blobs
+	 * @param neuroBlobs Number of potential Euro blobs
+	 * @param excludeList Array to track excluded blobs
+	 * @param counters Array of coin counters (indices 6 and 7 for 1€ and 2€)
+	 * @param distThresholdSq Square of distance threshold for nearby detection
+	 * @return true if a Euro coin was detected and counted
+	 */
+	bool DetectEuroCoinsImproved(OVC *blob, OVC *euroBlobs, int neuroBlobs, 
+	                           int *excludeList, int *counters, int distThresholdSq);
+
+	// Constants for Euro coin diameters
+	extern const float D_1EURO;
+	extern const float D_2EURO;
 
 #ifdef __cplusplus
 }

@@ -53,7 +53,7 @@ typedef struct {
     int frame;
     int totalCoins;
     float totalValue;
-    int coinCounts[6]; // 1c, 2c, 5c, 10c, 20c, 50c
+    int coinCounts[8]; // 1c, 2c, 5c, 10c, 20c, 50c, 1€, 2€
 } DetectionStats;
 
 int main(void)
@@ -179,7 +179,8 @@ int main(void)
             currentStats.totalCoins = 0;
             currentStats.totalValue = 0.0f;
             
-            for (int i = 0; i < 6; i++) {
+            // Update to include Euro coins (8 coin types total)
+            for (int i = 0; i < 8; i++) {  // Now handling 8 coin types (including Euro coins)
                 currentStats.coinCounts[i] = coinCounts[i];
                 currentStats.totalCoins += coinCounts[i];
                 
@@ -189,7 +190,9 @@ int main(void)
                                  (i == 2) ? 0.05f :  // 5 cents
                                  (i == 3) ? 0.10f :  // 10 cents
                                  (i == 4) ? 0.20f :  // 20 cents
-                                 0.50f;              // 50 cents
+                                 (i == 5) ? 0.50f :  // 50 cents
+                                 (i == 6) ? 1.00f :  // 1 euro (NEW)
+                                 2.00f;              // 2 euros (NEW)
                                  
                 currentStats.totalValue += coinCounts[i] * coinValue;
             }
@@ -220,7 +223,8 @@ int main(void)
             
             ss.str("");
             ss << "1c:" << currentStats.coinCounts[0] << "  2c:" << currentStats.coinCounts[1] << "  5c:" << currentStats.coinCounts[2]
-               << "  10c:" << currentStats.coinCounts[3] << "  20c:" << currentStats.coinCounts[4] << "  50c:" << currentStats.coinCounts[5];
+               << "  10c:" << currentStats.coinCounts[3] << "  20c:" << currentStats.coinCounts[4] << "  50c:" << currentStats.coinCounts[5]
+               << "  1e:" << currentStats.coinCounts[6] << "  2e:" << currentStats.coinCounts[7]; // Added Euro coins
             cv::putText(frame, ss.str(), cv::Point(15, 60), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 2);
             cv::putText(frame, ss.str(), cv::Point(15, 60), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 1);
             
@@ -266,13 +270,14 @@ int main(void)
 
     // Calculate and display final results
     int totalCoins = 0;
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 8; i++) {  // Now handling 8 coin types (including Euro coins)
         totalCoins += coinCounts[i];
     }
 
     float totalValue = coinCounts[0] * 0.01f + coinCounts[1] * 0.02f +
                       coinCounts[2] * 0.05f + coinCounts[3] * 0.10f +
-                      coinCounts[4] * 0.20f + coinCounts[5] * 0.50f;
+                      coinCounts[4] * 0.20f + coinCounts[5] * 0.50f +
+                      coinCounts[6] * 1.00f + coinCounts[7] * 2.00f;  // Added Euro coins
 
     std::cout << "\n===== FINAL RESULTS =====\n";
     std::cout << "Total coins: " << totalCoins << std::endl;
@@ -283,24 +288,11 @@ int main(void)
     std::cout << " 10 cents: " << std::setw(3) << coinCounts[3] << " (" << std::fixed << std::setprecision(2) << coinCounts[3] * 0.10f << " €)" << std::endl;
     std::cout << " 20 cents: " << std::setw(3) << coinCounts[4] << " (" << std::fixed << std::setprecision(2) << coinCounts[4] * 0.20f << " €)" << std::endl;
     std::cout << " 50 cents: " << std::setw(3) << coinCounts[5] << " (" << std::fixed << std::setprecision(2) << coinCounts[5] * 0.50f << " €)" << std::endl;
+    std::cout << "  1 euro:  " << std::setw(3) << coinCounts[6] << " (" << std::fixed << std::setprecision(2) << coinCounts[6] * 1.00f << " €)" << std::endl;
+    std::cout << "  2 euros: " << std::setw(3) << coinCounts[7] << " (" << std::fixed << std::setprecision(2) << coinCounts[7] * 2.00f << " €)" << std::endl;
     std::cout << "Total value: " << std::fixed << std::setprecision(2) << totalValue << " euros" << std::endl;
     std::cout << "==================\n";
 
-    // Save results to CSV file
-    FILE* resultsFile = fopen("coin_detection_results.csv", "w");
-    if (resultsFile) {
-        fprintf(resultsFile, "Frame,TotalCoins,TotalValue,1c,2c,5c,10c,20c,50c\n");
-        
-        for (const auto& stat : statistics) {
-            fprintf(resultsFile, "%d,%d,%.2f,%d,%d,%d,%d,%d,%d\n",
-                   stat.frame, stat.totalCoins, stat.totalValue,
-                   stat.coinCounts[0], stat.coinCounts[1], stat.coinCounts[2],
-                   stat.coinCounts[3], stat.coinCounts[4], stat.coinCounts[5]);
-        }
-        
-        fclose(resultsFile);
-        std::cout << "Results saved to coin_detection_results.csv\n";
-    }
 
     // Stop the timer and show elapsed time
     vc_timer();
