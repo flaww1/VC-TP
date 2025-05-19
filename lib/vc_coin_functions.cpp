@@ -577,326 +577,252 @@ extern "C"
      */
     void ProcessFrame(IVC *frame, IVC *frame2, int *excludeList, int *coinCounts)
     {
-        // Initialize coinCounts to 0 if this is the first frame
-        static bool firstFrame = true;
-        if (firstFrame) {
-            for (int i = 0; i < 8; i++) { // Update to 8 to include Euro coins
-                coinCounts[i] = 0;
-            }
-            firstFrame = false;
-            printf("[INFO] Starting coin detection\n");
+        // Initialize only once, then store static variables
+        static bool initialized = false;
+        static IVC *rgbImage = NULL, *hsvImage = NULL, *hsvImage2 = NULL, *hsvImage3 = NULL;
+        static IVC *grayImage = NULL, *grayImage2 = NULL, *grayImage3 = NULL, *grayImage4 = NULL;
+        static IVC *binaryImage = NULL, *binaryImage2 = NULL, *binaryImage3 = NULL, *binaryImage4 = NULL;
+        static IVC *edgeImage = NULL;
+        
+        // First-time initialization
+        if (!initialized) {
+            memset(coinCounts, 0, 8 * sizeof(int));
+            initialized = true;
         }
         
-        // Increment frame counter for coin tracking
+        // Increment frame counter
         IncrementFrameCounter();
         
+        // Basic parameter validation
+        if (!frame || !frame2 || !excludeList || !coinCounts) 
+            return;
+
+        // Get frame dimensions
+        const int width = frame->width;
+        const int height = frame->height;
+        const int channels = frame->channels;
+        const int size = width * height * channels;
+        
+        // Allocate image buffers only once
+        if (!rgbImage) {
+            rgbImage = vc_image_new(width, height, channels, 255);
+            hsvImage = vc_image_new(width, height, channels, 255);
+            hsvImage2 = vc_image_new(width, height, channels, 255);
+            hsvImage3 = vc_image_new(width, height, channels, 255);
+            
+            grayImage = vc_image_new(width, height, 1, 255);
+            grayImage2 = vc_image_new(width, height, 1, 255);
+            grayImage3 = vc_image_new(width, height, 1, 255);
+            grayImage4 = vc_image_new(width, height, 1, 255);
+            
+            binaryImage = vc_image_new(width, height, 1, 255);
+            binaryImage2 = vc_image_new(width, height, 1, 255);
+            binaryImage3 = vc_image_new(width, height, 1, 255);
+            binaryImage4 = vc_image_new(width, height, 1, 255);
+            
+            edgeImage = vc_image_new(width, height, 1, 255);
+            
+            // Handle allocation failure
+            if (!rgbImage || !hsvImage || !hsvImage2 || !hsvImage3 ||
+                !grayImage || !grayImage2 || !grayImage3 || !grayImage4 ||
+                !binaryImage || !binaryImage2 || !binaryImage3 || !binaryImage4 ||
+                !edgeImage) {
+                return;
+            }
+        }
+
+        // Convert BGR to RGB efficiently
+        vc_bgr_to_rgb(frame, rgbImage);
+        
+        // Process gold coins
+        memcpy(hsvImage->data, rgbImage->data, size);
+        vc_rgb_to_hsv(hsvImage, 0);  
+        vc_rgb_to_gray(hsvImage, grayImage2);
+        vc_gray_to_binary(grayImage2, binaryImage2, 110);
+        vc_binary_open(binaryImage2, grayImage2, 7);
+
+        // Process copper coins
+        vc_bgr_to_rgb(frame2, rgbImage);
+        memcpy(hsvImage2->data, rgbImage->data, size);
+        vc_rgb_to_hsv(hsvImage2, 1);
+        vc_rgb_to_gray(hsvImage2, grayImage3);
+        vc_gray_to_binary(grayImage3, binaryImage3, 80);
+        vc_binary_open(binaryImage3, grayImage3, 3);
+
+        // Process Euro coins
+        vc_bgr_to_rgb(frame, rgbImage);
+        memcpy(hsvImage3->data, rgbImage->data, size);
+        vc_rgb_to_hsv(hsvImage3, 2);
+        vc_rgb_to_gray(hsvImage3, grayImage4);
+        vc_gray_to_binary(grayImage4, binaryImage4, 90);
+        vc_binary_open(binaryImage4, grayImage4, 3);
+        
+        // Extract gray image for general blob detection
+        vc_rgb_to_gray(rgbImage, grayImage);
+        vc_gray_negative(grayImage);
+        vc_gray_to_binary(grayImage, binaryImage, 150);
+        vc_binary_open(binaryImage, binaryImage, 3);
+        vc_binary_close(binaryImage, binaryImage, 5);
+
+        // Blob detection and processing
+        int nlabels = 0, nlabels2 = 0, nlabels3 = 0, nlabels4 = 0;
+        OVC *blobs = NULL, *blobs2 = NULL, *blobs3 = NULL, *blobs4 = NULL;
+        
+        // Only proceed if we can extract main blobs
+        blobs = vc_binary_blob_labelling(binaryImage, binaryImage, &nlabels);
+        if (blobs && nlabels > 0) {
+            vc_binary_blob_info(binaryImage, blobs, nlabels);
+            
+            // Process gold coins
+            blobs2 = vc_binary_blob_labelling(grayImage2, grayImage2, &nlabels2);
+            if (blobs2 && nlabels2 > 0) {
+                vc_binary_blob_info(grayImage2, blobs2, nlabels2);
+                // No filtering needed here as it's done in ProcessImage
+            }
+            
+            // Process copper coins
+            blobs3 = vc_binary_blob_labelling(grayImage3, grayImage3, &nlabels3);
+            if (blobs3 && nlabels3 > 0) {
+                vc_binary_blob_info(grayImage3, blobs3, nlabels3);
+                // No filtering needed here as it's done in ProcessImage
+            }
+            
+            // Process Euro coins
+            blobs4 = vc_binary_blob_labelling(grayImage4, grayImage4, &nlabels4);
+            if (blobs4 && nlabels4 > 0) {
+                vc_binary_blob_info(grayImage4, blobs4, nlabels4);
+                // Force all reasonable blobs to be valid
+                for (int i = 0; i < nlabels4; i++) {
+                    if (blobs4[i].area > 5000 && blobs4[i].label == 0) {
+                        blobs4[i].label = 999;
+                    }
+                }
+            }
+            
+            // Process detected objects
+            ProcessImage(frame, blobs, blobs2, blobs3, blobs4, 
+                       nlabels, nlabels2, nlabels3, nlabels4, 
+                       excludeList, coinCounts);
+            
+            // Draw coins for visualization
+            DrawCoins(frame, blobs2, blobs3, blobs4, nlabels2, nlabels3, nlabels4);
+        }
+
         // Show summary of current counts every 30 frames
         if (GetFrameCounter() % 30 == 0) {
             float total = coinCounts[0] * 0.01f + coinCounts[1] * 0.02f + 
                          coinCounts[2] * 0.05f + coinCounts[3] * 0.10f + 
                          coinCounts[4] * 0.20f + coinCounts[5] * 0.50f +
                          coinCounts[6] * 1.00f + coinCounts[7] * 2.00f; // Add Euro coins
-            printf("[INFO] Frame %d - Current totals: 1c:%d 2c:%d 5c:%d 10c:%d 20c:%d 50c:%d 1€:%d 2€:%d = %.2f EUR\n", 
-                   GetFrameCounter(), coinCounts[0], coinCounts[1], coinCounts[2], 
-                   coinCounts[3], coinCounts[4], coinCounts[5], coinCounts[6], coinCounts[7], total);
-        }
-        
-        // Return early if invalid parameters
-        if (!frame || !frame2 || !excludeList || !coinCounts) {
-            fprintf(stderr, "Invalid parameters in ProcessFrame\n");
-            return;
-        }
-
-        // Create all pointers as NULL initially for safer cleanup
-        IVC *rgbImage = NULL, *hsvImage = NULL, *hsvImage2 = NULL, *hsvImage3 = NULL;
-        IVC *grayImage = NULL, *grayImage2 = NULL, *grayImage3 = NULL, *grayImage4 = NULL;
-        IVC *binaryImage = NULL, *binaryImage2 = NULL, *binaryImage3 = NULL, *binaryImage4 = NULL;
-        IVC *edgeImage = NULL;
-        OVC *blobs = NULL, *blobs2 = NULL, *blobs3 = NULL, *blobs4 = NULL;
-        int nlabels = 0, nlabels2 = 0, nlabels3 = 0, nlabels4 = 0;
-
-        // Move this variable declaration up:
-        int euroCoinsDetected = 0;
-        
-        // Allocate all required images in a single block to improve error handling
-        rgbImage = vc_image_new(frame->width, frame->height, frame->channels, 255);
-        hsvImage = vc_image_new(frame->width, frame->height, 3, 255);
-        hsvImage2 = vc_image_new(frame->width, frame->height, 3, 255);
-        hsvImage3 = vc_image_new(frame->width, frame->height, 3, 255);
-        
-        grayImage = vc_image_new(frame->width, frame->height, 1, 255);
-        grayImage2 = vc_image_new(frame->width, frame->height, 1, 255);
-        grayImage3 = vc_image_new(frame->width, frame->height, 1, 255);
-        grayImage4 = vc_image_new(frame->width, frame->height, 1, 255);
-        
-        binaryImage = vc_image_new(frame->width, frame->height, 1, 255);
-        binaryImage2 = vc_image_new(frame->width, frame->height, 1, 255);
-        binaryImage3 = vc_image_new(frame->width, frame->height, 1, 255);
-        binaryImage4 = vc_image_new(frame->width, frame->height, 1, 255);
-        
-        edgeImage = vc_image_new(frame->width, frame->height, 1, 255);
-
-        // Check if any allocation failed
-        if (!rgbImage || !hsvImage || !hsvImage2 || !hsvImage3 ||
-            !grayImage || !grayImage2 || !grayImage3 || !grayImage4 ||
-            !binaryImage || !binaryImage2 || !binaryImage3 || !binaryImage4 ||
-            !edgeImage) {
-            fprintf(stderr, "Memory allocation failed in ProcessFrame\n");
-            goto cleanup;
-        }
-
-        // Basic segmentation for all coins
-        vc_bgr_to_rgb(frame, rgbImage);
-        memcpy(hsvImage->data, rgbImage->data, frame->width * frame->height * 3);
-        
-        vc_rgb_to_gray(rgbImage, grayImage);
-        
-        // Edge detection for improved coin detection (Prewitt with low threshold)
-        vc_gray_edge_prewitt(grayImage, edgeImage, 20.0f);
-        
-        // Apply negative and binarization
-        vc_gray_negative(grayImage);
-        vc_gray_to_binary(grayImage, binaryImage, 150);
-        
-        // Apply morphological operations to clean up the binary image
-        vc_binary_open(binaryImage, binaryImage, 3); // Remove small noise
-        vc_binary_close(binaryImage, binaryImage, 5); // Fill small holes
-
-        // IMPROVED: Gold coin segmentation with better HSV thresholds
-        vc_rgb_to_hsv(hsvImage, 0); // 0 = gold coin segmentation (adjusted for better gold detection)
-        vc_rgb_to_gray(hsvImage, grayImage2);
-        vc_gray_to_binary(grayImage2, binaryImage2, 120); // Adjusted threshold
-        vc_binary_open(binaryImage2, grayImage2, 7);
-
-        // IMPROVED: Copper coin segmentation with better HSV thresholds
-        vc_bgr_to_rgb(frame2, rgbImage);
-        memcpy(hsvImage2->data, rgbImage->data, frame->width * frame->height * 3);
-        vc_rgb_to_hsv(hsvImage2, 1); // 1 = copper coin segmentation (adjusted for better copper detection)
-        vc_rgb_to_gray(hsvImage2, grayImage3);
-        vc_gray_to_binary(grayImage3, binaryImage3, 85); // Adjusted threshold
-        vc_binary_open(binaryImage3, grayImage3, 3);
-
-        // NEW: Euro coin segmentation (bi-metal/silver coins)
-        vc_bgr_to_rgb(frame, rgbImage);
-        memcpy(hsvImage3->data, rgbImage->data, frame->width * frame->height * 3);
-        vc_rgb_to_hsv(hsvImage3, 2); // 2 = euro coin segmentation (new HSV type)
-        vc_rgb_to_gray(hsvImage3, grayImage4);
-        vc_gray_to_binary(grayImage4, binaryImage4, 100); // Reduced threshold for more sensitive detection
-        vc_binary_open(binaryImage4, grayImage4, 3);
-
-        // Blob detection for all coins
-        blobs = vc_binary_blob_labelling(binaryImage, binaryImage, &nlabels);
-        if (blobs && nlabels > 0) {
-            vc_binary_blob_info(binaryImage, blobs, nlabels);
-        }
-
-        // Blob detection for gold coins - with improved filtering
-        blobs2 = vc_binary_blob_labelling(grayImage2, grayImage2, &nlabels2);
-        if (blobs2 && nlabels2 > 0) {
-            vc_binary_blob_info(grayImage2, blobs2, nlabels2);
-            FilterGoldCoinBlobs(blobs2, nlabels2);
-        }
-
-        // Blob detection for copper coins - with improved filtering
-        blobs3 = vc_binary_blob_labelling(grayImage3, grayImage3, &nlabels3);
-        if (blobs3 && nlabels3 > 0) {
-            vc_binary_blob_info(grayImage3, blobs3, nlabels3);
-            FilterCopperCoinBlobs(blobs3, nlabels3);
-        }
-
-        // NEW: Blob detection for Euro coins - NO filtering
-        blobs4 = vc_binary_blob_labelling(grayImage4, grayImage4, &nlabels4);
-        if (blobs4 && nlabels4 > 0) {
-            vc_binary_blob_info(grayImage4, blobs4, nlabels4);
             
-            // Debug output to see what we're detecting
-            int potentialEuroCount = 0;
-            printf("\n--- EURO DETECTION DEBUG ---\n");
-            printf("Found %d total blobs in Euro segmentation\n", nlabels4);
-            
-            // Set ALL blobs as valid regardless of other criteria
-            for (int i = 0; i < nlabels4; i++) {
-                // Force ALL reasonable sized blobs to be valid
-                if (blobs4[i].area > 5000) {
-                    if (blobs4[i].label == 0) {
-                        blobs4[i].label = 999; // Give it a valid label
-                    }
-                    
-                    printf("Blob %d: area=%d size=%dx%d at (%d,%d)\n", 
-                           i, blobs4[i].area, blobs4[i].width, blobs4[i].height,
-                           blobs4[i].xc, blobs4[i].yc);
-                           
-                    // If it's plausibly a Euro by size
-                    if (blobs4[i].width >= 140 || blobs4[i].height >= 140) {
-                        potentialEuroCount++;
-                    }
-                }
-            }
-            printf("Found %d potential Euro coins\n", potentialEuroCount);
-            printf("--------------------------\n");
+            printf("\n[COIN SUMMARY] Frame %d\n", GetFrameCounter());
+            printf("1c: %d (%.2f€), 2c: %d (%.2f€), 5c: %d (%.2f€)\n", 
+                   coinCounts[0], coinCounts[0] * 0.01f,
+                   coinCounts[1], coinCounts[1] * 0.02f,
+                   coinCounts[2], coinCounts[2] * 0.05f);
+            printf("10c: %d (%.2f€), 20c: %d (%.2f€), 50c: %d (%.2f€)\n", 
+                   coinCounts[3], coinCounts[3] * 0.10f,
+                   coinCounts[4], coinCounts[4] * 0.20f,
+                   coinCounts[5], coinCounts[5] * 0.50f);
+            printf("1€: %d (%.2f€), 2€: %d (%.2f€)\n", 
+                   coinCounts[6], coinCounts[6] * 1.00f,
+                   coinCounts[7], coinCounts[7] * 2.00f);
+            printf("Total coins: %d | Total value: %.2f EUR\n", 
+                   coinCounts[0] + coinCounts[1] + coinCounts[2] + 
+                   coinCounts[3] + coinCounts[4] + coinCounts[5] +
+                   coinCounts[6] + coinCounts[7], total);
         }
-        
-        // Force Euro detection debug
-        printf("\n[EURO DEBUG] Before ProcessImage: %d Euro blobs\n", nlabels4);
 
-        // Process detected objects for coin detection with improved algorithms
-        ProcessImage(frame, blobs, blobs2, blobs3, blobs4, nlabels, nlabels2, nlabels3, nlabels4, excludeList, coinCounts);
-        
-        // Draw visualizations using improved function - now includes Euro coins
-        DrawCoins(frame, blobs2, blobs3, blobs4, nlabels2, nlabels3, nlabels4);
-
-    cleanup:
-        // Free all allocated resources
-        if (blobs4) free(blobs4);
-        if (blobs3) free(blobs3);
-        if (blobs2) free(blobs2);
+        // Cleanup
         if (blobs) free(blobs);
-        
-        if (edgeImage) vc_image_free(edgeImage);
-        if (binaryImage4) vc_image_free(binaryImage4);
-        if (binaryImage3) vc_image_free(binaryImage3);
-        if (binaryImage2) vc_image_free(binaryImage2);
-        if (binaryImage) vc_image_free(binaryImage);
-        
-        if (grayImage4) vc_image_free(grayImage4);
-        if (grayImage3) vc_image_free(grayImage3);
-        if (grayImage2) vc_image_free(grayImage2);
-        if (grayImage) vc_image_free(grayImage);
-        
-        if (hsvImage3) vc_image_free(hsvImage3);
-        if (hsvImage2) vc_image_free(hsvImage2);
-        if (hsvImage) vc_image_free(hsvImage);
-        if (rgbImage) vc_image_free(rgbImage);
+        if (blobs2) free(blobs2);
+        if (blobs3) free(blobs3);
+        if (blobs4) free(blobs4);
+
+        // Note: We don't free image buffers as they're reused between frames
     }
 
     /**
      * @brief Desenha visualizações de moedas com suporte para Euro coins
      */
     void DrawCoins(IVC *frame, OVC *goldBlobs, OVC *copperBlobs, OVC *euroBlobs,
-                  int nGoldBlobs, int nCopperBlobs, int nEuroBlobs)
-    {
-        // Draw Euro coins first for proper layering
+                  int nGoldBlobs, int nCopperBlobs, int nEuroBlobs) {
+        // Draw Euro coins first (they have priority)
         if (euroBlobs && nEuroBlobs > 0) {
-            printf("[DRAW] Processing %d potential Euro blobs\n", nEuroBlobs);
+            // Find best Euro blob in one pass instead of allocating memory
+            OVC bestEuro = {0};
+            bool foundValidEuro = false;
             
-            // Arrays for valid blobs
-            OVC *validEuroBlobs = (OVC *)calloc(nEuroBlobs, sizeof(OVC));
-            int validCount = 0;
+            float bestCircularity = 0.0f;
+            int bestArea = 0;
             
-            // Size thresholds for Euro coins and parts
+            // Constants
             const int MAX_VALID_AREA = 100000;
-            const int MIN_PART_AREA = 12000;  // REDUCED from 14000 to detect Euro parts earlier
-
-            // Two passes:
-            // 1. First look for complete Euro coins (large circles)
+            const int MIN_VALID_AREA = 12000;
+            
+            // Find complete Euro coins first
             for (int i = 0; i < nEuroBlobs; i++) {
-                // Skip very large background blobs
                 if (euroBlobs[i].area > MAX_VALID_AREA)
                     continue;
+                    
+                const float diameter = CalculateCircularDiameter(&euroBlobs[i]);
+                const float circularity = CalculateCircularity(&euroBlobs[i]);
                 
-                float diameter = CalculateCircularDiameter(&euroBlobs[i]);
-                float circularity = CalculateCircularity(&euroBlobs[i]);
-                
-                // Complete Euro coins are ~180-210px diameter with good circularity
+                // Complete Euro detection
                 if (diameter >= 175.0f && diameter <= 210.0f && circularity >= 0.75f) {
-                    // Get last coin type at this position - don't draw Euro over gold coins
-                    int lastCoinType = GetLastCoinTypeAtLocation(euroBlobs[i].xc, euroBlobs[i].yc);
-                    
-                    // If this is a gold coin position, don't draw Euro here
-                    if (lastCoinType >= 4 && lastCoinType <= 6) {
-                        printf("[EURO DRAW] Skipping potential Euro at (%d,%d) - already detected as gold coin\n",
-                               euroBlobs[i].xc, euroBlobs[i].yc);
+                    // Skip if this is a gold coin position
+                    const int lastType = GetLastCoinTypeAtLocation(euroBlobs[i].xc, euroBlobs[i].yc);
+                    if (lastType >= 4 && lastType <= 6)
                         continue;
-                    }
-                    
-                    // Copy to validated list for drawing
-                    memcpy(&validEuroBlobs[validCount], &euroBlobs[i], sizeof(OVC));
-                    validEuroBlobs[validCount].label = 999;  // Valid label
-                    validCount++;
-                    
-                    printf("[EURO DRAW] Adding complete Euro coin at (%d,%d) size %dx%d diam=%.1f\n",
-                          euroBlobs[i].xc, euroBlobs[i].yc, 
-                          euroBlobs[i].width, euroBlobs[i].height, diameter);
-                    
-                    // First match is enough - break
-                    break;
+                        
+                    memcpy(&bestEuro, &euroBlobs[i], sizeof(OVC));
+                    bestEuro.label = 999;
+                    foundValidEuro = true;
+                    break; // First match is sufficient
                 }
             }
             
-            // 2. If no complete coins found, look for significant parts
-            if (validCount == 0) {
+            // If no complete coins found, look for valid parts
+            if (!foundValidEuro) {
                 for (int i = 0; i < nEuroBlobs; i++) {
-                    // REDUCED minimum area threshold to catch parts earlier
-                    if (euroBlobs[i].area > MAX_VALID_AREA || euroBlobs[i].area < MIN_PART_AREA)
+                    if (euroBlobs[i].area < MIN_VALID_AREA || euroBlobs[i].area > MAX_VALID_AREA)
                         continue;
+                        
+                    const float circularity = CalculateCircularity(&euroBlobs[i]);
                     
-                    // RELAXED circularity requirement for parts from 0.70f to 0.65f
-                    float circularity = CalculateCircularity(&euroBlobs[i]);
-                    
-                    // For parts, we need decent circularity and size
                     if (circularity >= 0.65f && 
-                        euroBlobs[i].width >= 130 && euroBlobs[i].height >= 130) {
+                        euroBlobs[i].width >= 130 && euroBlobs[i].height >= 130 &&
+                        euroBlobs[i].area > bestArea) {
                         
-                        // Get last coin type at this position - don't draw Euro over gold coins
-                        int lastCoinType = GetLastCoinTypeAtLocation(euroBlobs[i].xc, euroBlobs[i].yc);
-                        
-                        // If this is definitely a gold coin position, don't draw Euro here
-                        if (lastCoinType >= 4 && lastCoinType <= 6) {
+                        // Skip if this is a gold coin position
+                        const int lastType = GetLastCoinTypeAtLocation(euroBlobs[i].xc, euroBlobs[i].yc);
+                        if (lastType >= 4 && lastType <= 6)
                             continue;
-                        }
-                        
-                        // Clear selection and add this as the only one
-                        validCount = 0;
-                        
-                        // Copy to validated list for drawing
-                        memcpy(&validEuroBlobs[validCount], &euroBlobs[i], sizeof(OVC));
-                        validEuroBlobs[validCount].label = 999;
-                        validCount++;
-                        
-                        // Based on blob size, try to estimate the full coin size
-                        if (euroBlobs[i].area >= 14000) {
-                            printf("[EURO DRAW] Adding Euro coin part at (%d,%d) size %dx%d\n",
-                                  euroBlobs[i].xc, euroBlobs[i].yc,
-                                  euroBlobs[i].width, euroBlobs[i].height);
                             
-                            // For 2 Euro coins, we want to draw a larger circle than just the detected part
-                            OVC *destBlob = &validEuroBlobs[0];
-                            
-                            // Create a larger bounding box to encompass the full Euro size
-                            destBlob->width = 220;  // Increased to ensure 2€ detection
-                            destBlob->height = 220; // Increased to ensure 2€ detection
-                            
-                            // Center the expanded box on the detected part
-                            destBlob->x = euroBlobs[i].xc - destBlob->width/2;
-                            destBlob->y = euroBlobs[i].yc - destBlob->height/2;
-                            
-                            // Keep center point the same
-                            destBlob->xc = euroBlobs[i].xc;
-                            destBlob->yc = euroBlobs[i].yc;
-                            
-                            // Set area to reflect the full coin
-                            destBlob->area = 35000;  // Increased to ensure 2€ classification
-                        }
-                        
-                        // First match is enough - break
-                        break;
+                        memcpy(&bestEuro, &euroBlobs[i], sizeof(OVC));
+                        bestEuro.label = 999;
+                        bestArea = euroBlobs[i].area;
+                        foundValidEuro = true;
                     }
+                }
+                
+                // Expand bounding box for 2€ coins
+                if (foundValidEuro && bestEuro.area >= 14000) {
+                    bestEuro.width = 220;
+                    bestEuro.height = 220;
+                    bestEuro.x = bestEuro.xc - bestEuro.width/2;
+                    bestEuro.y = bestEuro.yc - bestEuro.height/2;
+                    bestEuro.area = 35000;
                 }
             }
             
-            // Draw only validated Euro blobs
-            if (validCount > 0) {
-                printf("[DRAW] Drawing %d Euro coins or parts\n", validCount);
-                DrawBoundingBoxes(frame, validEuroBlobs, validCount, 2);
+            // Draw the best Euro coin if found
+            if (foundValidEuro) {
+                DrawBoundingBoxes(frame, &bestEuro, 1, 2);
             }
-            else {
-                printf("[DRAW] No valid Euro blobs to draw\n");
-            }
-            
-            free(validEuroBlobs);
         }
         
-        // Now draw copper and gold coins normally
+        // Draw copper and gold coins
         if (copperBlobs && nCopperBlobs > 0) {
             DrawBoundingBoxes(frame, copperBlobs, nCopperBlobs, 0);
         }

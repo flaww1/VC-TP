@@ -60,7 +60,7 @@ int GetFrameCounter()
 }
 
 /**
- * @brief Enhanced function to check if a coin was already detected and counted
+ * @brief Streamlined function to check if a coin was already detected
  * 
  * @param x X coordinate of coin center
  * @param y Y coordinate of coin center
@@ -68,85 +68,58 @@ int GetFrameCounter()
  * @param countIt Whether to mark this coin as counted (1) or just check (0)
  * @return 1 if already counted, 0 if new or not yet counted
  */
-int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt)
-{
-    // Use different distance thresholds based on coin type
-    int distanceThreshold;
-    
-    // Euro coins need larger threshold due to their size and parts detection
-    if (coinType >= 7) {
-        distanceThreshold = 75;  // Larger threshold for Euro coins - increased from 70
-    } else {
-        distanceThreshold = 50;  // Standard for regular coins
-    }
-    
+int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt) {
+    // Optimized by using constants and removing repeated calculations
+    const int distanceThreshold = (coinType >= 7) ? 75 : 50;
     const int distThresholdSq = distanceThreshold * distanceThreshold;
-    
-    // Make frame memory longer for Euro coins to prevent double counting
-    int frameMemory = (coinType >= 7) ? 120 : 60;
+    const int frameMemory = (coinType >= 7) ? 120 : 60;
+    const int currentFrame = GetFrameCounter();
     
     int existingIndex = -1;
     int emptyIndex = -1;
     
-    // Special handling for Euro coins - check if a gold coin was detected at this position
-    // and was potentially the center part of a Euro coin
-    if (coinType >= 7) {  // If this is a Euro coin (1€ or 2€)
+    // Handle Euro coins replacing gold coins
+    if (coinType >= 7) {
+        // Use early exit to reduce iterations
         for (int i = 0; i < MAX_TRACKED_COINS; i++) {
-            // Skip empty entries
             if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0)
                 continue;
                 
-            // Check if gold coin exists at this position
             if (detectedCoins[i][2] >= 4 && detectedCoins[i][2] <= 6) {
-                int dx = detectedCoins[i][0] - x;
-                int dy = detectedCoins[i][1] - y;
-                int distSq = dx*dx + dy*dy;
+                const int dx = detectedCoins[i][0] - x;
+                const int dy = detectedCoins[i][1] - y;
+                const int distSq = dx*dx + dy*dy;
                 
-                // INCREASED distance threshold for gold->euro replacement (70px->85px)
-                // This allows for faster detection when the gold coin is part of a Euro
                 if (distSq <= 85*85) {
-                    printf("INFO: Found conflicting gold coin at Euro position (%d,%d) - replacing\n", x, y);
-                    
-                    // Clear the entry
-                    detectedCoins[i][0] = 0;
-                    detectedCoins[i][1] = 0;
-                    detectedCoins[i][2] = 0;
-                    detectedCoins[i][3] = 0;
-                    detectedCoins[i][4] = 0;
+                    // Clear directly (no debug print)
+                    memset(&detectedCoins[i][0], 0, 5 * sizeof(int));
+                    break;
                 }
             }
         }
     }
     
-    // First pass: look for any coin at this position, even if type doesn't match
-    // This helps prevent gold coins being counted as Euro coins or vice versa
+    // Find existing or empty slot in one pass
     for (int i = 0; i < MAX_TRACKED_COINS; i++) {
-        // Skip empty entries but record first empty slot
         if (detectedCoins[i][0] == 0 && detectedCoins[i][1] == 0) {
             if (emptyIndex == -1) emptyIndex = i;
             continue;
         }
         
-        // Check if any coin is at this position
-        int dx = detectedCoins[i][0] - x;
-        int dy = detectedCoins[i][1] - y;
-        int distSq = dx*dx + dy*dy;
+        const int dx = detectedCoins[i][0] - x;
+        const int dy = detectedCoins[i][1] - y;
+        const int distSq = dx*dx + dy*dy;
         
-        // If close enough, we consider it the same physical coin
         if (distSq <= distThresholdSq) {
-            // Check if it's still within our time window
-            if ((frameCounter - detectedCoins[i][3] < frameMemory) || 
-                detectedCoins[i][3] > frameCounter) { // Handle counter reset
+            // Valid frame window
+            if ((currentFrame - detectedCoins[i][3] < frameMemory) || 
+                detectedCoins[i][3] > currentFrame) {
                 
-                // Found an existing coin at this location
                 existingIndex = i;
                 
-                // Special case: when transitioning between gold and Euro detection
-                // For Euro coins (types 7-8), prioritize this type if the position matches a gold coin
-                // This prevents a gold part of a Euro coin from blocking Euro detection
+                // Handle Euro replacing gold
                 if (coinType >= 7 && detectedCoins[i][2] >= 4 && detectedCoins[i][2] <= 6) {
-                    printf("INFO: Upgrading possible gold coin detection to Euro coin at (%d,%d)\n", x, y);
-                    detectedCoins[i][2] = coinType; // Upgrade type to Euro
+                    detectedCoins[i][2] = coinType;
                 }
                 
                 break;
@@ -154,77 +127,29 @@ int IsCoinAlreadyDetected(int x, int y, int coinType, int countIt)
         }
     }
     
-    // If we found a coin at this location
+    // Update existing or add new entry
     if (existingIndex >= 0) {
-        // Always update position for tracking
+        // Update position and timestamp
         detectedCoins[existingIndex][0] = x;
         detectedCoins[existingIndex][1] = y;
-        detectedCoins[existingIndex][3] = frameCounter;
+        detectedCoins[existingIndex][3] = currentFrame;
         
-        // If we want to count this coin and it's not counted yet
+        // Handle counting
         if (countIt && detectedCoins[existingIndex][4] == 0) {
-            detectedCoins[existingIndex][4] = 1;  // Mark as counted
-            return 0;  // Return "new count"
+            detectedCoins[existingIndex][4] = 1;
+            return 0;
         }
         
-        // Return counted status (1 if already counted)
         return detectedCoins[existingIndex][4];
     }
     
-    // Not found - add to tracking if we have space
+    // Add new entry if possible
     if (emptyIndex >= 0) {
         detectedCoins[emptyIndex][0] = x;
         detectedCoins[emptyIndex][1] = y;
         detectedCoins[emptyIndex][2] = coinType;
-        detectedCoins[emptyIndex][3] = frameCounter;
-        detectedCoins[emptyIndex][4] = countIt ? 1 : 0;  // Mark as counted if requested
-    }
-    
-    return 0;  // New coin/position
-}
-
-/**
- * @brief Gere a lista de moedas a excluir da contagem
- * @param excludeList Array para guardar coordenadas das moedas
- * @param xc Coordenada x do centro da moeda
- * @param yc Coordenada y do centro da moeda
- * @param option 0 para adicionar, 1 para remover
- * @return 0
- */
-int ExcludeCoin(int *excludeList, int xc, int yc, int option)
-{
-    if (!excludeList) return 0;
-    
-    const int PROXIMITY_THRESHOLD_SQ = 30 * 30; // 30 pixels squared distance threshold
-    
-    if (option == 0) {
-        // Add to exclusion list - find first empty slot
-        for (int i = 0; i < MAX_COINS; i++) {
-            if (excludeList[i * 2] == 0 && excludeList[i * 2 + 1] == 0) {
-                excludeList[i * 2] = xc;
-                excludeList[i * 2 + 1] = yc;
-                break;
-            }
-        }
-    }
-    else if (option == 1) {
-        // Remove from exclusion list - remove entries close to the specified position
-        for (int i = 0; i < MAX_COINS; i++) {
-            if (excludeList[i * 2] == 0 && excludeList[i * 2 + 1] == 0) {
-                continue;
-            }
-            
-            // Check if this entry is close enough to the specified position
-            int dx = excludeList[i * 2] - xc;
-            int dy = excludeList[i * 2 + 1] - yc;
-            int distSq = dx*dx + dy*dy;
-            
-            if (distSq <= PROXIMITY_THRESHOLD_SQ) {
-                // Clear this entry
-                excludeList[i * 2] = 0;
-                excludeList[i * 2 + 1] = 0;
-            }
-        }
+        detectedCoins[emptyIndex][3] = currentFrame;
+        detectedCoins[emptyIndex][4] = countIt ? 1 : 0;
     }
     
     return 0;
@@ -239,21 +164,20 @@ int ExcludeCoin(int *excludeList, int xc, int yc, int option)
  * @param blob Estrutura OVC contendo informações do blob
  * @return Valor de circularidade (1.0 = perfeitamente circular)
  */
-float CalculateCircularity(OVC *blob)
-{
-    // Circularidade = 4 * π * área / (perímetro)²
-    // Um círculo perfeito tem valor 1.0
-    // Valores menores indicam formas menos circulares
-    if (blob->perimeter == 0)
+float CalculateCircularity(OVC *blob) {
+    // Avoid division by zero
+    if (blob->perimeter <= 0)
         return 0.0f;
 
-    float circularity = (4.0f * 3.14159f * (float)blob->area) / ((float)(blob->perimeter * blob->perimeter));
+    // Use static const for PI value to avoid recalculation
+    static const float PI = 3.14159f;
+    
+    // Single calculation
+    const float circularity = (4.0f * PI * (float)blob->area) / 
+                            ((float)(blob->perimeter * blob->perimeter));
 
-    // Limita o valor máximo a 1.0 (pode exceder devido a aproximações)
-    if (circularity > 1.0f)
-        circularity = 1.0f;
-
-    return circularity;
+    // Clamp to valid range
+    return (circularity > 1.0f) ? 1.0f : circularity;
 }
 
 /**
@@ -265,12 +189,9 @@ float CalculateCircularity(OVC *blob)
  * @param blob Ponteiro para a estrutura do blob
  * @return Diâmetro estimado com base na área circular
  */
-float CalculateCircularDiameter(OVC *blob)
-{
-    // Área de um círculo = π * r² onde r é o raio
-    // Então diâmetro = 2 * sqrt(área / π)
-    float area = (float)blob->area;
-    return 2.0f * sqrtf(area / 3.14159f);
+float CalculateCircularDiameter(OVC *blob) {
+    // Area-based diameter calculation
+    return 2.0f * sqrtf((float)blob->area / 3.14159f);
 }
 
 /**
@@ -507,6 +428,53 @@ int GetLastCoinTypeAtLocation(int x, int y)
     }
     
     return nearestType;
+}
+
+/**
+ * @brief Gere a lista de moedas a excluir da contagem
+ * @param excludeList Array para guardar coordenadas das moedas
+ * @param xc Coordenada x do centro da moeda
+ * @param yc Coordenada y do centro da moeda
+ * @param option 0 para adicionar, 1 para remover
+ * @return 0
+ */
+int ExcludeCoin(int *excludeList, int xc, int yc, int option)
+{
+    if (!excludeList) return 0;
+    
+    const int PROXIMITY_THRESHOLD_SQ = 30 * 30; // 30 pixels squared distance threshold
+    
+    if (option == 0) {
+        // Add to exclusion list - find first empty slot
+        for (int i = 0; i < MAX_COINS; i++) {
+            if (excludeList[i * 2] == 0 && excludeList[i * 2 + 1] == 0) {
+                excludeList[i * 2] = xc;
+                excludeList[i * 2 + 1] = yc;
+                break;
+            }
+        }
+    }
+    else if (option == 1) {
+        // Remove from exclusion list - remove entries close to the specified position
+        for (int i = 0; i < MAX_COINS; i++) {
+            if (excludeList[i * 2] == 0 && excludeList[i * 2 + 1] == 0) {
+                continue;
+            }
+            
+            // Check if this entry is close enough to the specified position
+            int dx = excludeList[i * 2] - xc;
+            int dy = excludeList[i * 2 + 1] - yc;
+            int distSq = dx*dx + dy*dy;
+            
+            if (distSq <= PROXIMITY_THRESHOLD_SQ) {
+                // Clear this entry
+                excludeList[i * 2] = 0;
+                excludeList[i * 2 + 1] = 0;
+            }
+        }
+    }
+    
+    return 0;
 }
 
 #ifdef __cplusplus

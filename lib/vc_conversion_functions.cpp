@@ -235,125 +235,70 @@ extern "C"
         int height = srcdst->height;
         int bytesperline = srcdst->bytesperline;
         int channels = srcdst->channels;
-        float r, g, b, hue, saturation, value;
-        float rgb_max, rgb_min;
-        int i, size;
-
-        if ((srcdst->width <= 0) || (srcdst->height <= 0) || (srcdst->data == NULL))
-            return 0;
-        if (channels != 3)
+        int i, size = width * height * channels;
+        
+        if ((srcdst->width <= 0) || (srcdst->height <= 0) || (srcdst->data == NULL) || channels != 3)
             return 0;
 
-        size = width * height * channels;
-
-        for (i = 0; i < size; i = i + channels)
-        {
-            r = (float)data[i];
-            g = (float)data[i + 1];
-            b = (float)data[i + 2];
-
-            // Calcula valores maximo e minimo dos canais de cor R, G e B
-            rgb_max = (r > g ? (r > b ? r : b) : (g > b ? g : b));
-            rgb_min = (r < g ? (r < b ? r : b) : (g < b ? g : b));
-
-            // Value toma valores entre [0,255]
-            value = rgb_max;
-            if (value == 0.0)
-            {
-                hue = 0.0;
-                saturation = 0.0;
-            }
-            else
-            {
-                // Saturation toma valores entre [0,255]
+        // Use a single loop and optimize HSV calculation
+        for (i = 0; i < size; i += channels) {
+            // RGB to HSV conversion
+            const float r = (float)data[i];
+            const float g = (float)data[i + 1];
+            const float b = (float)data[i + 2];
+            
+            // Find max and min in one pass
+            const float rgb_max = fmaxf(r, fmaxf(g, b));
+            const float rgb_min = fminf(r, fminf(g, b));
+            
+            // Value is always the maximum
+            const float value = rgb_max;
+            
+            // Default values for edge cases
+            float hue = 0.0f;
+            float saturation = 0.0f;
+            
+            // Only compute saturation and hue if value is non-zero
+            if (value > 0.0f) {
+                // Saturation calculation
                 saturation = ((rgb_max - rgb_min) / rgb_max) * 255.0f;
-
-                if (saturation == 0.0)
-                {
-                    hue = 0.0f;
-                }
-                else
-                {
-                    // Hue toma valores entre [0,360]
-                    if ((rgb_max == r) && (g >= b))
-                    {
-                        hue = 60.0f * (g - b) / (rgb_max - rgb_min);
-                    }
-                    else if ((rgb_max == r) && (b > g))
-                    {
-                        hue = 360.0f + 60.0f * (g - b) / (rgb_max - rgb_min);
-                    }
-                    else if (rgb_max == g)
-                    {
-                        hue = 120.0f + 60.0f * (b - r) / (rgb_max - rgb_min);
-                    }
-                    else /* rgb_max == b*/
-                    {
-                        hue = 240.0f + 60.0f * (r - g) / (rgb_max - rgb_min);
-                    }
-                }
-            }
-
-            if (segmentType == 0)
-            { // moedas 10 20 50 centimos (douradas) para binario
-                // Segmenta moedas douradas: matiz entre 40° e 85° (amarelados/dourados)
-                // Estas tonalidades douradas são típicas das moedas de 10, 20, 50 cêntimos
-                if ((hue >= 40.0f) && (hue <= 85.0f) && saturation >= 50.0f && value >= 50.0f)
-                {
-                    data[i] = 255;
-                    data[i + 1] = 255;
-                    data[i + 2] = 255;
-                }
-                else
-                {
-                    data[i] = 0;
-                    data[i + 1] = 0;
-                    data[i + 2] = 0;
-                }
-            }
-            else if (segmentType == 1)
-            { // moedas 1 2 5 centimos (cobre) para binario
-                // Segmenta moedas de cobre: matiz entre 15° e 40° (tons avermelhados/acobreados)
-                // Com elevada saturação, típico das moedas de 1, 2 e 5 cêntimos
-                if ((hue >= 15.0f) && (hue <= 40.0f) && (saturation >= 80.0f))
-                {
-                    data[i] = 255;
-                    data[i + 1] = 255;
-                    data[i + 2] = 255;
-                }
-                else
-                {
-                    data[i] = 0;
-                    data[i + 1] = 0;
-                    data[i + 2] = 0;
-                }
-            }
-            else if (segmentType == 2)
-            { // moedas 1 e 2 euros (prateadas/bimetálicas)
-                // COMPLETELY NEW APPROACH FOR EURO COIN SEGMENTATION
-                // For white backgrounds, target specific metallic features
-
-                // Euro coins have distinctive characteristics:
-                // 1. The outer ring tends to be more yellowish/gold
-                // 2. The inner part is silver/gray with low saturation
-                // 3. They have a distinctive metallic "shine" with medium value
                 
-                // Target specific features of Euro coins
-                bool isOuterRing = (hue >= 30.0f && hue <= 90.0f && saturation >= 50.0f);
-                bool isInnerPart = (saturation < 50.0f && value > 80.0f && value < 220.0f);
-                bool isMetallicShine = (saturation < 40.0f && value > 160.0f);
+                // Only compute hue if saturation is non-zero
+                if (saturation > 0.0f) {
+                    // Simplified hue calculation
+                    const float delta = rgb_max - rgb_min;
+                    
+                    if (rgb_max == r) {
+                        hue = (g >= b) ? 
+                            60.0f * (g - b) / delta : 
+                            360.0f + 60.0f * (g - b) / delta;
+                    } else if (rgb_max == g) {
+                        hue = 120.0f + 60.0f * (b - r) / delta;
+                    } else { // rgb_max == b
+                        hue = 240.0f + 60.0f * (r - g) / delta;
+                    }
+                }
+            }
+            
+            // Segmentation based on type - optimized for fewer operations
+            if (segmentType == 0) { // Gold coins
+                const bool isGold = (hue >= 35.0f && hue <= 95.0f && 
+                                    saturation >= 40.0f && value >= 40.0f);
                 
-                // Accept ANY part of a Euro coin
-                if (isOuterRing || isInnerPart || isMetallicShine) {
-                    data[i] = 255;
-                    data[i + 1] = 255;
-                    data[i + 2] = 255;
-                }
-                else {
-                    data[i] = 0;
-                    data[i + 1] = 0;
-                    data[i + 2] = 0;
-                }
+                // Set all channels at once using ternary to avoid branches
+                data[i] = data[i+1] = data[i+2] = isGold ? 255 : 0;
+            }
+            else if (segmentType == 1) { // Copper coins
+                const bool isCopper = (hue >= 10.0f && hue <= 45.0f && saturation >= 70.0f);
+                
+                data[i] = data[i+1] = data[i+2] = isCopper ? 255 : 0;
+            }
+            else if (segmentType == 2) { // Euro coins
+                // Combine silver and gold detection into one condition
+                const bool isEuroCoin = (saturation < 60.0f && value > 80.0f && value < 240.0f) || 
+                                       (hue >= 20.0f && hue <= 95.0f && saturation >= 35.0f && value >= 35.0f);
+                
+                data[i] = data[i+1] = data[i+2] = isEuroCoin ? 255 : 0;
             }
         }
 
