@@ -445,13 +445,7 @@ extern "C"
 	 */
 	int GetLastCoinTypeAtLocation(int x, int y);
 
-	/**
-	 * @brief Add labels to coins using OpenCV's text rendering
-	 * 
-	 * @param frame Original OpenCV frame to label
-	 * @param excludeList Exclusion list containing coin positions
-	 */
-	void AddCoinLabelsCV(cv::Mat &frame, int *excludeList);
+
 
 #ifdef __cplusplus
 }

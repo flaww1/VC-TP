@@ -398,7 +398,7 @@ extern "C"
         const int AREA_MIN_THRESHOLD = 9000;
         
         // Temporary frame coin count
-        int frameCoins[8] = {0};
+        int frameCoins[6] = {0}; // Only counting 6 types now (1c to 50c)
 
         // Use a bitmap for faster collision detection (1 bit per 4 pixels)
         const int MAP_WIDTH = 320;
@@ -473,8 +473,8 @@ extern "C"
             }
         }
 
-        // Update all coin counts (indices 0-7: 1c through 2€)
-        for (int i = 0; i < 8; i++) {
+        // Update all coin counts (indices 0-5: 1c through 50c)
+        for (int i = 0; i < 6; i++) {
             coinCounts[i] += frameCoins[i];
         }
 
@@ -497,7 +497,7 @@ extern "C"
         }
 
         // Create all pointers as NULL initially for safer cleanup
-        IVC *rgbImage = NULL, *hsvImage = NULL, *hsvImage2 = NULL, *hsvSilver = NULL;
+        IVC *rgbImage = NULL, *hsvImage = NULL, *hsvImage2 = NULL;
         IVC *grayImage = NULL, *grayImage2 = NULL, *grayImage3 = NULL;
         IVC *binaryImage = NULL, *binaryImage2 = NULL, *binaryImage3 = NULL;
         OVC *blobs = NULL, *blobs2 = NULL, *blobs3 = NULL;
@@ -507,7 +507,6 @@ extern "C"
         rgbImage = vc_image_new(frame->width, frame->height, frame->channels, 255);
         hsvImage = vc_image_new(frame->width, frame->height, 3, 255);
         hsvImage2 = vc_image_new(frame->width, frame->height, 3, 255);
-        hsvSilver = vc_image_new(frame->width, frame->height, 3, 255);
         
         grayImage = vc_image_new(frame->width, frame->height, 1, 255);
         grayImage2 = vc_image_new(frame->width, frame->height, 1, 255);
@@ -518,7 +517,7 @@ extern "C"
         binaryImage3 = vc_image_new(frame->width, frame->height, 1, 255);
 
         // Check if any allocation failed
-        if (!rgbImage || !hsvImage || !hsvImage2 || !hsvSilver ||
+        if (!rgbImage || !hsvImage || !hsvImage2 ||
             !grayImage || !grayImage2 || !grayImage3 ||
             !binaryImage || !binaryImage2 || !binaryImage3) {
             fprintf(stderr, "Memory allocation failed in ProcessFrame\n");
@@ -528,7 +527,6 @@ extern "C"
         // Basic segmentation for all coins
         vc_bgr_to_rgb(frame, rgbImage);
         memcpy(hsvImage->data, rgbImage->data, frame->width * frame->height * 3);
-        // No need to process silver areas
         
         vc_rgb_to_gray(rgbImage, grayImage);
         vc_gray_negative(grayImage);
@@ -568,10 +566,10 @@ extern "C"
             FilterCopperCoinBlobs(blobs3, nlabels3);
         }
 
-        // Process detected objects for standard coin detection
+        // Process detected objects for coin detection
         ProcessImage(frame, blobs, blobs2, blobs3, nlabels, nlabels2, nlabels3, excludeList, coinCounts);
         
-        // Draw visualizations - only pass gold and copper coins (NULL for silver)
+        // Draw visualizations - only pass gold and copper coins
         DrawCoins(frame, blobs2, blobs3, nlabels2, nlabels3, NULL, 0);
 
     cleanup:
@@ -588,7 +586,6 @@ extern "C"
         if (grayImage2) vc_image_free(grayImage2);
         if (grayImage) vc_image_free(grayImage);
         
-        if (hsvSilver) vc_image_free(hsvSilver);
         if (hsvImage2) vc_image_free(hsvImage2);
         if (hsvImage) vc_image_free(hsvImage);
         if (rgbImage) vc_image_free(rgbImage);
